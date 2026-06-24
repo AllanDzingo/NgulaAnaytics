@@ -1,0 +1,63 @@
+using Microsoft.EntityFrameworkCore;
+using NgulAnalytics.Api.Data;
+
+namespace NgulAnalytics.Api.Services;
+
+public class SheqService
+{
+    private readonly NgulAnalyticsDbContext _context;
+
+    public SheqService(NgulAnalyticsDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Dictionary<string, decimal>> GetUndergroundKpisAsync(DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var query = _context.UndergroundReadings
+            .Include(ur => ur.ShiftReport)
+            .AsQueryable();
+
+        if (startDate.HasValue)
+            query = query.Where(ur => ur.ShiftReport.Date >= startDate.Value);
+        if (endDate.HasValue)
+            query = query.Where(ur => ur.ShiftReport.Date <= endDate.Value);
+
+        var readings = await query.ToListAsync();
+
+        if (!readings.Any())
+            return new Dictionary<string, decimal>();
+
+        // Oxygen Compliance: Readings >= 19.5%
+        var oxygenCompliant = readings.Count(r => r.OxygenLevelStart >= 19.5m && r.OxygenLevelMidshift >= 19.5m && r.OxygenLevelFinish >= 19.5m);
+        var oxygenCompliance = (oxygenCompliant / (decimal)readings.Count) * 100;
+
+        // Dust Compliance: Readings <= 0.5 mg/m³
+        var dustCompliant = readings.Count(r => r.DustLevel <= 0.5m);
+        var dustCompliance = (dustCompliant / (decimal)readings.Count) * 100;
+
+        // Excavation Rate
+        var totalTruckloads = readings.Sum(r => r.TruckloadsExcavated);
+        var excavationRate = readings.Count > 0 ? totalTruckloads / (decimal)readings.Count : 0;
+
+        return new Dictionary<string, decimal>
+        {
+            ["OxygenCompliance"] = Math.Round(oxygenCompliance, 2),
+            ["DustCompliance"] = Math.Round(dustCompliance, 2),
+            ["ExcavationRate"] = Math.Round(excavationRate, 2),
+            ["TotalTruckloads"] = totalTruckloads
+        };
+    }
+
+    public async Task<int> GetTotalIncidentsAsync(DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var query = _context.SheqObservations.AsQueryable();
+
+        if (startDate.HasValue)
+            query = query.Where(so => so.ShiftReport.Date >= startDate.Value);
+        if (endDate.HasValue)
+            query = query.Where(so => so.ShiftReport.Date <= endDate.Value);
+
+        return await query.SumAsync(so => so.Incidents);
+    }
+}
