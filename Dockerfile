@@ -20,7 +20,9 @@ WORKDIR /frontend
 
 # Copy package files
 COPY src/ngula-frontend/package*.json ./
-RUN npm ci && find -L node_modules/.bin -type f -exec chmod +x {} +
+RUN npm ci --unsafe-perm && \
+    find -L node_modules/.bin -type f -exec chmod +x {} + && \
+    find -L node_modules -path '*/bin/*' -type f -exec chmod +x {} +
 
 # Copy frontend source and build
 COPY src/ngula-frontend/ ./
