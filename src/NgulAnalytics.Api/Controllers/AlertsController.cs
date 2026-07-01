@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NgulAnalytics.Api.DTOs;
 using NgulAnalytics.Api.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace NgulAnalytics.Api.Controllers;
 
@@ -18,25 +20,24 @@ public class AlertsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<AlertDto>>> GetAlerts([FromQuery] bool unreadOnly = false)
+    public async Task<ActionResult<List<AlertDto>>> GetAll([FromQuery] bool unreadOnly = false)
     {
         var alerts = await _alertService.GetAlertsAsync(unreadOnly);
         return Ok(alerts);
     }
 
-    [HttpGet("unread-count")]
-    public async Task<ActionResult<int>> GetUnreadCount()
+    [HttpGet("count")]
+    public async Task<ActionResult<object>> GetUnreadCount()
     {
         var count = await _alertService.GetUnreadCountAsync();
-        return Ok(count);
+        return Ok(new { unreadCount = count });
     }
 
     [HttpPatch("{id}/mark-read")]
     public async Task<IActionResult> MarkAsRead(int id)
     {
-        var success = await _alertService.MarkAsReadAsync(id);
-        if (!success)
-            return NotFound();
+        var result = await _alertService.MarkAsReadAsync(id);
+        if (!result) return NotFound();
         return NoContent();
     }
 

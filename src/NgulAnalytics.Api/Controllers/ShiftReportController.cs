@@ -60,9 +60,9 @@ public class ShiftReportController : ControllerBase
 
     [HttpPost]
     [Authorize(Policy = "Supervisor")]
-    public async Task<IActionResult> Create([FromBody] CreateShiftReportRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateShiftReportDto request)
     {
-        var supervisorId = Guid.Parse(User.Identity!.Name!);
+        var supervisorId = Guid.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
 
         var report = new ShiftReport
         {
@@ -78,17 +78,17 @@ public class ShiftReportController : ControllerBase
         await _context.SaveChangesAsync();
 
         // Add production entry
-        if (request.Production != null)
+        if (request.ProductionEntry != null)
         {
             _context.ProductionEntries.Add(new ProductionEntry
             {
                 ShiftReportId = report.Id,
-                TonsCrushed = request.Production.TonsCrushed,
-                TonsMilled = request.Production.TonsMilled,
-                FeedGrade = request.Production.FeedGrade,
-                RecoveryPercentage = request.Production.RecoveryPercentage,
-                ConcentrateProduced = request.Production.ConcentrateProduced,
-                Comments = request.Production.Comments
+                TonsCrushed = request.ProductionEntry.TonsCrushed,
+                TonsMilled = request.ProductionEntry.TonsMilled,
+                FeedGrade = request.ProductionEntry.FeedGrade,
+                RecoveryPercentage = request.ProductionEntry.RecoveryPercentage,
+                ConcentrateProduced = request.ProductionEntry.ConcentrateProduced,
+                Comments = request.ProductionEntry.Comments
             });
         }
 
@@ -181,7 +181,7 @@ public class ShiftReportController : ControllerBase
                 OxygenLevelMidshift = request.UndergroundReading.OxygenLevelMidshift,
                 OxygenLevelFinish = request.UndergroundReading.OxygenLevelFinish,
                 DustLevel = request.UndergroundReading.DustLevel,
-                Visibility = request.UndergroundReading.Visibility,
+                Visibility = Enum.TryParse<Visibility>(request.UndergroundReading.Visibility, true, out var vis) ? vis : Visibility.Good,
                 Incidents = request.UndergroundReading.Incidents,
                 IncidentDescriptions = request.UndergroundReading.IncidentDescriptions
             });

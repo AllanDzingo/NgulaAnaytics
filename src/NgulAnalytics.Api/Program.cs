@@ -1,18 +1,30 @@
+using NgulAnalytics.Api.Seed;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NgulAnalytics.Api.Auth;
 using NgulAnalytics.Api.Data;
-using NgulAnalytics.Api.Seed;
 using NgulAnalytics.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddScoped<DataSeeder>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 // Database
 builder.Services.AddDbContext<NgulAnalyticsDbContext>(options =>
@@ -58,6 +70,7 @@ builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<HandoverService>();
 builder.Services.AddScoped<ActionService>();
 builder.Services.AddScoped<AlertService>();
+builder.Services.AddScoped<UserService>();
 
 var app = builder.Build();
 
@@ -76,13 +89,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Serve frontend static files in production (must be before MapControllers)
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
-// Serve frontend static files in production
-app.UseDefaultFiles();
-app.UseStaticFiles();
 
 app.Run();

@@ -42,7 +42,7 @@ public class AuthController : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> GetCurrentUser()
     {
-        var userId = User.Identity?.Name;
+        var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
         var user = await _context.Users.FindAsync(Guid.Parse(userId));

@@ -1,0 +1,8 @@
+# .NET build and user files
+[Oo]bj/
+[Bb]in/
+.vs/
+
+# Secrets and configurations
+*.env
+*.env.*

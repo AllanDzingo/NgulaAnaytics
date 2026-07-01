@@ -2,6 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using NgulAnalytics.Api.Data;
 using NgulAnalytics.Api.DTOs;
 using NgulAnalytics.Api.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace NgulAnalytics.Api.Services;
 
@@ -14,7 +18,117 @@ public class ActionService
         _context = context;
     }
 
-    public async Task<Models.Action> CreateActionAsync(CreateActionRequest request, Guid createdById)
+    public async Task<PagedResult<ActionItemDto>> GetActionsAsync(
+        string? status, string? priority, Guid? assignedTo, string? source, int page, int pageSize)
+    {
+        var query = _context.Actions
+            .Include(a => a.AssignedTo)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(status))
+            query = query.Where(a => a.Status == status);
+
+        if (!string.IsNullOrEmpty(priority))
+            query = query.Where(a => a.Priority == priority);
+
+        if (assignedTo.HasValue)
+            query = query.Where(a => a.AssignedToId == assignedTo.Value);
+
+        if (!string.IsNullOrEmpty(source))
+            query = query.Where(a => a.Source == source);
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(a => a.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(a => new ActionItemDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                Source = a.Source,
+                SourceId = a.SourceId,
+                Priority = a.Priority,
+                Status = a.Status,
+                AssignedToId = a.AssignedToId,
+                CreatedById = a.CreatedById,
+                EquipmentId = a.EquipmentId,
+                DueDate = a.DueDate,
+                CreatedAt = a.CreatedAt,
+                ClosedAt = a.ClosedAt,
+                AssignedTo = a.AssignedTo != null ? new UserDto
+                {
+                    Id = a.AssignedTo.Id,
+                    Email = a.AssignedTo.Email,
+                    FullName = a.AssignedTo.FullName,
+                    Role = a.AssignedTo.Role,
+                    IsActive = a.AssignedTo.IsActive
+                } : null
+            })
+            .ToListAsync();
+
+        return new PagedResult<ActionItemDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
+    }
+
+    public async Task<ActionItemDetailDto?> GetActionByIdAsync(int id)
+    {
+        var a = await _context.Actions
+            .Include(x => x.AssignedTo)
+            .Include(x => x.Comments).ThenInclude(c => c.User)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (a == null) return null;
+
+        return new ActionItemDetailDto
+        {
+            Id = a.Id,
+            Title = a.Title,
+            Description = a.Description,
+            Source = a.Source,
+            SourceId = a.SourceId,
+            Priority = a.Priority,
+            Status = a.Status,
+            AssignedToId = a.AssignedToId,
+            CreatedById = a.CreatedById,
+            EquipmentId = a.EquipmentId,
+            DueDate = a.DueDate,
+            CreatedAt = a.CreatedAt,
+            ClosedAt = a.ClosedAt,
+            AssignedTo = a.AssignedTo != null ? new UserDto
+            {
+                Id = a.AssignedTo.Id,
+                Email = a.AssignedTo.Email,
+                FullName = a.AssignedTo.FullName,
+                Role = a.AssignedTo.Role,
+                IsActive = a.AssignedTo.IsActive
+            } : null,
+            Comments = a.Comments.Select(c => new ActionCommentDto
+            {
+                Id = c.Id,
+                ActionId = c.ActionId,
+                UserId = c.UserId,
+                Comment = c.Comment,
+                CreatedAt = c.CreatedAt,
+                User = c.User != null ? new UserDto
+                {
+                    Id = c.User.Id,
+                    Email = c.User.Email,
+                    FullName = c.User.FullName,
+                    Role = c.User.Role,
+                    IsActive = c.User.IsActive
+                } : null
+            }).ToList()
+        };
+    }
+
+    public async Task<ActionItemDto> CreateActionAsync(CreateActionRequest request, Guid createdById)
     {
         var action = new Models.Action
         {
@@ -23,20 +137,54 @@ public class ActionService
             Source = request.Source,
             SourceId = request.SourceId,
             Priority = request.Priority,
+            Status = "Open",
             AssignedToId = request.AssignedToId,
             CreatedById = createdById,
             EquipmentId = request.EquipmentId,
-            DueDate = request.DueDate
+            DueDate = request.DueDate,
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.Actions.Add(action);
         await _context.SaveChangesAsync();
-        return action;
+
+        // Load AssignedTo user if set
+        if (action.AssignedToId.HasValue)
+        {
+            await _context.Entry(action).Reference(a => a.AssignedTo).LoadAsync();
+        }
+
+        return new ActionItemDto
+        {
+            Id = action.Id,
+            Title = action.Title,
+            Description = action.Description,
+            Source = action.Source,
+            SourceId = action.SourceId,
+            Priority = action.Priority,
+            Status = action.Status,
+            AssignedToId = action.AssignedToId,
+            CreatedById = action.CreatedById,
+            EquipmentId = action.EquipmentId,
+            DueDate = action.DueDate,
+            CreatedAt = action.CreatedAt,
+            ClosedAt = action.ClosedAt,
+            AssignedTo = action.AssignedTo != null ? new UserDto
+            {
+                Id = action.AssignedTo.Id,
+                Email = action.AssignedTo.Email,
+                FullName = action.AssignedTo.FullName,
+                Role = action.AssignedTo.Role,
+                IsActive = action.AssignedTo.IsActive
+            } : null
+        };
     }
 
-    public async Task<Models.Action?> UpdateActionAsync(int id, UpdateActionRequest request)
+    public async Task<ActionItemDto?> UpdateActionAsync(int id, UpdateActionRequest request)
     {
-        var action = await _context.Actions.FindAsync(id);
+        var action = await _context.Actions
+            .Include(a => a.AssignedTo)
+            .FirstOrDefaultAsync(a => a.Id == id);
         if (action == null) return null;
 
         if (request.Status != null)
@@ -47,30 +195,82 @@ public class ActionService
         }
 
         if (request.AssignedToId.HasValue)
+        {
             action.AssignedToId = request.AssignedToId.Value;
+        }
 
         if (request.DueDate.HasValue)
+        {
             action.DueDate = request.DueDate.Value;
+        }
 
         await _context.SaveChangesAsync();
-        return action;
+
+        if (action.AssignedToId.HasValue && (action.AssignedTo == null || action.AssignedTo.Id != action.AssignedToId.Value))
+        {
+            await _context.Entry(action).Reference(a => a.AssignedTo).LoadAsync();
+        }
+
+        return new ActionItemDto
+        {
+            Id = action.Id,
+            Title = action.Title,
+            Description = action.Description,
+            Source = action.Source,
+            SourceId = action.SourceId,
+            Priority = action.Priority,
+            Status = action.Status,
+            AssignedToId = action.AssignedToId,
+            CreatedById = action.CreatedById,
+            EquipmentId = action.EquipmentId,
+            DueDate = action.DueDate,
+            CreatedAt = action.CreatedAt,
+            ClosedAt = action.ClosedAt,
+            AssignedTo = action.AssignedTo != null ? new UserDto
+            {
+                Id = action.AssignedTo.Id,
+                Email = action.AssignedTo.Email,
+                FullName = action.AssignedTo.FullName,
+                Role = action.AssignedTo.Role,
+                IsActive = action.AssignedTo.IsActive
+            } : null
+        };
     }
 
-    public async Task<ActionComment> AddCommentAsync(int actionId, Guid userId, string comment)
+    public async Task<ActionCommentDto> AddCommentAsync(int actionId, Guid userId, string commentText)
     {
         var actionComment = new ActionComment
         {
             ActionId = actionId,
             UserId = userId,
-            Comment = comment
+            Comment = commentText,
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.ActionComments.Add(actionComment);
         await _context.SaveChangesAsync();
-        return actionComment;
+
+        await _context.Entry(actionComment).Reference(c => c.User).LoadAsync();
+
+        return new ActionCommentDto
+        {
+            Id = actionComment.Id,
+            ActionId = actionComment.ActionId,
+            UserId = actionComment.UserId,
+            Comment = actionComment.Comment,
+            CreatedAt = actionComment.CreatedAt,
+            User = actionComment.User != null ? new UserDto
+            {
+                Id = actionComment.User.Id,
+                Email = actionComment.User.Email,
+                FullName = actionComment.User.FullName,
+                Role = actionComment.User.Role,
+                IsActive = actionComment.User.IsActive
+            } : null
+        };
     }
 
-    public async Task<ActionDashboardDto> GetDashboardAsync()
+    public async Task<ActionDashboardDto> GetDashboardStatsAsync()
     {
         var actions = await _context.Actions.ToListAsync();
 

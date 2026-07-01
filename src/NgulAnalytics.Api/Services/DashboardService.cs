@@ -31,7 +31,7 @@ public class DashboardService
             {
                 Id = a.Id,
                 Type = a.Type,
-                Severity = a.Severity,
+                Severity = a.Severity.ToString(),
                 Title = a.Title,
                 Message = a.Message,
                 IsRead = a.IsRead,

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NgulAnalytics.Api.Data;
 using NgulAnalytics.Api.DTOs;
+using NgulAnalytics.Api.Models;
 
 namespace NgulAnalytics.Api.Services;
 

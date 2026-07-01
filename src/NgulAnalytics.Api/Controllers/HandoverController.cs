@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NgulAnalytics.Api.DTOs;
 using NgulAnalytics.Api.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace NgulAnalytics.Api.Controllers;
 
@@ -18,7 +20,7 @@ public class HandoverController : ControllerBase
     }
 
     [HttpGet("current/{sectionId}")]
-    public async Task<ActionResult<ShiftHandoverDto>> GetCurrentHandover(int sectionId)
+    public async Task<ActionResult<HandoverSummaryDto>> GetCurrentHandover(int sectionId)
     {
         var handover = await _handoverService.GetCurrentHandoverAsync(sectionId);
         if (handover == null)
@@ -27,17 +29,9 @@ public class HandoverController : ControllerBase
     }
 
     [HttpGet("history/{sectionId}")]
-    public async Task<ActionResult<List<ShiftHandoverDto>>> GetHandoverHistory(int sectionId, [FromQuery] int days = 7)
+    public async Task<ActionResult<List<HandoverSummaryDto>>> GetHandoverHistory(int sectionId, [FromQuery] int days = 7)
     {
         var history = await _handoverService.GetHandoverHistoryAsync(sectionId, days);
         return Ok(history);
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "Supervisor")]
-    public async Task<ActionResult<ShiftHandoverDto>> CreateHandover([FromBody] CreateShiftHandoverDto dto)
-    {
-        var handover = await _handoverService.CreateHandoverAsync(dto);
-        return CreatedAtAction(nameof(GetCurrentHandover), new { sectionId = handover.SectionId }, handover);
     }
 }

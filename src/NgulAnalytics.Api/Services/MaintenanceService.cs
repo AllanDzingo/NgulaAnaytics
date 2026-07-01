@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NgulAnalytics.Api.Data;
 using NgulAnalytics.Api.Models;
+using NgulAnalytics.Api.DTOs;
 
 namespace NgulAnalytics.Api.Services;
 
@@ -44,5 +45,16 @@ public class MaintenanceService
             var hoursUntilDue = e.ServiceIntervalHours - hoursSinceService;
             return hoursUntilDue > 0 && hoursUntilDue <= hoursThreshold;
         }).ToList();
+    }
+
+    public async Task<MaintenanceKpiDto> GetKpis()
+    {
+        var overdue = await GetOverdueEquipmentAsync();
+        var upcoming = await GetUpcomingServicesAsync();
+        return new MaintenanceKpiDto
+        {
+            OverdueCount = overdue.Count,
+            UpcomingCount = upcoming.Count
+        };
     }
 }

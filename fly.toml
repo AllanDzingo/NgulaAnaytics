@@ -1,0 +1,23 @@
+app = "ngula-analytics"
+primary_region = "jnb"
+
+[build]
+
+[env]
+  ASPNETCORE_ENVIRONMENT = "Production"
+
+[http_service]
+  internal_port = 5000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 1024
+
+[mounts]
+  source = "ngula_data"
+  destination = "/data"

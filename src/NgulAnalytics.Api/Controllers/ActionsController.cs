@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NgulAnalytics.Api.DTOs;
 using NgulAnalytics.Api.Services;
+using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace NgulAnalytics.Api.Controllers;
 
@@ -43,7 +46,8 @@ public class ActionsController : ControllerBase
     [Authorize(Roles = "Executive,Engineering,Production,SHEQ,Supervisor")]
     public async Task<ActionResult<ActionItemDto>> CreateAction([FromBody] CreateActionDto dto)
     {
-        var action = await _actionService.CreateActionAsync(dto);
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var action = await _actionService.CreateActionAsync(dto, userId);
         return CreatedAtAction(nameof(GetAction), new { id = action.Id }, action);
     }
 
@@ -59,7 +63,8 @@ public class ActionsController : ControllerBase
     [HttpPost("{id}/comments")]
     public async Task<ActionResult<ActionCommentDto>> AddComment(int id, [FromBody] CreateActionCommentDto dto)
     {
-        var comment = await _actionService.AddCommentAsync(id, dto);
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var comment = await _actionService.AddCommentAsync(id, userId, dto.Comment);
         return Ok(comment);
     }
 

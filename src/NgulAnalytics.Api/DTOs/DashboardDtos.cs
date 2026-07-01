@@ -73,3 +73,18 @@ public class EquipmentStatusDto
     public string Name { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
 }
+
+public class SheqKpiDto
+{
+    public decimal OxygenCompliance { get; set; }
+    public decimal DustCompliance { get; set; }
+    public decimal ExcavationRate { get; set; }
+    public decimal TotalTruckloads { get; set; }
+    public int TotalIncidents { get; set; }
+}
+
+public class MaintenanceKpiDto
+{
+    public int OverdueCount { get; set; }
+    public int UpcomingCount { get; set; }
+}

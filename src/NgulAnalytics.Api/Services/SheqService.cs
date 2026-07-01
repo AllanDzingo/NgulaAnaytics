@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NgulAnalytics.Api.Data;
+using NgulAnalytics.Api.DTOs;
 
 namespace NgulAnalytics.Api.Services;
 
@@ -59,5 +60,20 @@ public class SheqService
             query = query.Where(so => so.ShiftReport.Date <= endDate.Value);
 
         return await query.SumAsync(so => so.Incidents);
+    }
+
+    public async Task<SheqKpiDto> GetSheqKpisAsync(DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var underKpis = await GetUndergroundKpisAsync(startDate, endDate);
+        var incidents = await GetTotalIncidentsAsync(startDate, endDate);
+
+        return new SheqKpiDto
+        {
+            OxygenCompliance = underKpis.TryGetValue("OxygenCompliance", out var o2) ? o2 : 100,
+            DustCompliance = underKpis.TryGetValue("DustCompliance", out var dust) ? dust : 100,
+            ExcavationRate = underKpis.TryGetValue("ExcavationRate", out var exc) ? exc : 0,
+            TotalTruckloads = underKpis.TryGetValue("TotalTruckloads", out var tl) ? tl : 0,
+            TotalIncidents = incidents
+        };
     }
 }

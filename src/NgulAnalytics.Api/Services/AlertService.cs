@@ -1,5 +1,11 @@
+using Microsoft.EntityFrameworkCore;
 using NgulAnalytics.Api.Data;
+using NgulAnalytics.Api.DTOs;
 using NgulAnalytics.Api.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace NgulAnalytics.Api.Services;
 
@@ -14,18 +20,71 @@ public class AlertService
 
     public async Task<Alert> CreateAlertAsync(string type, string severity, string title, string message, int? equipmentId = null)
     {
+        if (!Enum.TryParse<AlertSeverity>(severity, true, out var alertSeverity))
+        {
+            alertSeverity = AlertSeverity.Info;
+        }
+
         var alert = new Alert
         {
             Type = type,
-            Severity = severity,
+            Severity = alertSeverity,
             Title = title,
             Message = message,
-            EquipmentId = equipmentId
+            EquipmentId = equipmentId,
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.Alerts.Add(alert);
         await _context.SaveChangesAsync();
         return alert;
+    }
+
+    public async Task<List<AlertDto>> GetAlertsAsync(bool unreadOnly = false)
+    {
+        var query = _context.Alerts.AsQueryable();
+        if (unreadOnly)
+        {
+            query = query.Where(a => !a.IsRead);
+        }
+
+        var alerts = await query.OrderByDescending(a => a.CreatedAt).ToListAsync();
+        return alerts.Select(a => new AlertDto
+        {
+            Id = a.Id,
+            Type = a.Type,
+            Severity = a.Severity.ToString(),
+            Title = a.Title,
+            Message = a.Message,
+            IsRead = a.IsRead,
+            CreatedAt = a.CreatedAt
+        }).ToList();
+    }
+
+    public async Task<int> GetUnreadCountAsync()
+    {
+        return await _context.Alerts.CountAsync(a => !a.IsRead);
+    }
+
+    public async Task<bool> MarkAsReadAsync(int id)
+    {
+        var alert = await _context.Alerts.FindAsync(id);
+        if (alert == null) return false;
+
+        alert.IsRead = true;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task MarkAllAsReadAsync()
+    {
+        var unreadAlerts = await _context.Alerts.Where(a => !a.IsRead).ToListAsync();
+        foreach (var alert in unreadAlerts)
+        {
+            alert.IsRead = true;
+        }
+        await _context.SaveChangesAsync();
     }
 
     public async Task GenerateAlertsFromEquipmentAsync()

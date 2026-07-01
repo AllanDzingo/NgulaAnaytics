@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NgulAnalytics.Api.DTOs;
 using NgulAnalytics.Api.Services;
+using System.Threading.Tasks;
 
 namespace NgulAnalytics.Api.Controllers;
 
@@ -11,11 +12,45 @@ namespace NgulAnalytics.Api.Controllers;
 public class DashboardController : ControllerBase
 {
     private readonly DashboardService _dashboard;
-    public DashboardController(DashboardService dashboard) => _dashboard = dashboard;
+    private readonly ProductionService _production;
+    private readonly EngineeringService _engineering;
+    private readonly SheqService _sheq;
+
+    public DashboardController(
+        DashboardService dashboard,
+        ProductionService production,
+        EngineeringService engineering,
+        SheqService sheq)
+    {
+        _dashboard = dashboard;
+        _production = production;
+        _engineering = engineering;
+        _sheq = sheq;
+    }
 
     [HttpGet("executive")]
-    public async Task<ActionResult<ExecutiveDashboardDto>> GetExecutive()
-        => Ok(await _dashboard.GetExecutiveDashboard());
+    public async Task<ActionResult<ExecutiveSummaryDto>> GetExecutive()
+    {
+        return Ok(await _dashboard.GetExecutiveSummaryAsync());
+    }
+
+    [HttpGet("production")]
+    public async Task<ActionResult<ProductionKpiDto>> GetProductionKpis([FromQuery] int? sectionId)
+    {
+        return Ok(await _production.GetKpisAsync(sectionId));
+    }
+
+    [HttpGet("engineering")]
+    public async Task<ActionResult<EngineeringKpiDto>> GetEngineeringKpis()
+    {
+        return Ok(await _engineering.GetKpisAsync());
+    }
+
+    [HttpGet("sheq")]
+    public async Task<ActionResult<SheqKpiDto>> GetSheqKpis()
+    {
+        return Ok(await _sheq.GetSheqKpisAsync());
+    }
 }
 
 [ApiController]
@@ -27,9 +62,10 @@ public class ProductionController : ControllerBase
     public ProductionController(ProductionService production) => _production = production;
 
     [HttpGet("kpis")]
-    public async Task<ActionResult<ProductionKpiDto>> GetKpis(
-        [FromQuery] int? sectionId, [FromQuery] int? days)
-        => Ok(await _production.GetKpis(sectionId, days));
+    public async Task<ActionResult<ProductionKpiDto>> GetKpis([FromQuery] int? sectionId)
+    {
+        return Ok(await _production.GetKpisAsync(sectionId));
+    }
 }
 
 [ApiController]
@@ -41,8 +77,10 @@ public class EngineeringController : ControllerBase
     public EngineeringController(EngineeringService engineering) => _engineering = engineering;
 
     [HttpGet("kpis")]
-    public async Task<ActionResult<EngineeringKpiDto>> GetKpis([FromQuery] int? days)
-        => Ok(await _engineering.GetKpis(days));
+    public async Task<ActionResult<EngineeringKpiDto>> GetKpis([FromQuery] int? equipmentId)
+    {
+        return Ok(await _engineering.GetKpisAsync(equipmentId));
+    }
 }
 
 [ApiController]
@@ -55,7 +93,9 @@ public class MaintenanceController : ControllerBase
 
     [HttpGet("kpis")]
     public async Task<ActionResult<MaintenanceKpiDto>> GetKpis()
-        => Ok(await _maintenance.GetKpis());
+    {
+        return Ok(await _maintenance.GetKpis());
+    }
 }
 
 [ApiController]
@@ -67,6 +107,8 @@ public class SheqController : ControllerBase
     public SheqController(SheqService sheq) => _sheq = sheq;
 
     [HttpGet("kpis")]
-    public async Task<ActionResult<SheqKpiDto>> GetKpis([FromQuery] int? days)
-        => Ok(await _sheq.GetKpis(days));
+    public async Task<ActionResult<SheqKpiDto>> GetKpis()
+    {
+        return Ok(await _sheq.GetSheqKpisAsync());
+    }
 }
