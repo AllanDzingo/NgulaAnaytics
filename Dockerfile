@@ -10,7 +10,7 @@ RUN dotnet restore src/NgulAnalytics.Api/NgulAnalytics.Api.csproj
 
 # Copy backend source and build
 COPY src/NgulAnalytics.Api/ src/NgulAnalytics.Api/
-RUN dotnet publish src/NgulAnalytics.Api/NgulAnalytics.Api.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish src/NgulAnalytics.Api/NgulAnalytics.Api.csproj -c Release -o /app/publish
 
 # ============================================
 # Stage 2: Build React Frontend
@@ -20,7 +20,7 @@ WORKDIR /frontend
 
 # Copy package files
 COPY src/ngula-frontend/package*.json ./
-RUN npm ci
+RUN npm ci && chmod +x node_modules/.bin/*
 
 # Copy frontend source and build
 COPY src/ngula-frontend/ ./
