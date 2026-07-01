@@ -20,7 +20,7 @@ WORKDIR /frontend
 
 # Copy package files
 COPY src/ngula-frontend/package*.json ./
-RUN npm ci && chmod +x node_modules/.bin/*
+RUN npm ci && find -L node_modules/.bin -type f -exec chmod +x {} +
 
 # Copy frontend source and build
 COPY src/ngula-frontend/ ./
@@ -42,7 +42,7 @@ COPY --from=backend-build /app/publish .
 COPY --from=frontend-build /frontend/dist ./wwwroot
 
 # Environment
-ENV ASPNETCORE_URLS=http://+:5000
+ENV ASPNETCORE_URLS=http://+:${PORT:-5000}
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 EXPOSE 5000
