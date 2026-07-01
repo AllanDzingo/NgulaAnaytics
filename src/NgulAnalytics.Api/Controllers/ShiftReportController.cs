@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -62,7 +63,7 @@ public class ShiftReportController : ControllerBase
     [Authorize(Policy = "Supervisor")]
     public async Task<IActionResult> Create([FromBody] CreateShiftReportDto request)
     {
-        var supervisorId = Guid.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
+        var supervisorId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var report = new ShiftReport
         {
