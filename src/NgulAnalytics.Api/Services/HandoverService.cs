@@ -56,12 +56,12 @@ public class HandoverService
             Date = latestReport.Date,
             Shift = latestReport.Shift,
             SupervisorName = latestReport.Supervisor.FullName,
-            MajorEvents = latestReport.ShiftHandover.MajorEvents,
-            EquipmentIssues = latestReport.ShiftHandover.EquipmentIssues,
-            SafetyConcerns = latestReport.ShiftHandover.SafetyConcerns,
-            ProductionConcerns = latestReport.ShiftHandover.ProductionConcerns,
-            OutstandingActions = latestReport.ShiftHandover.OutstandingActions,
-            GeneralNotes = latestReport.ShiftHandover.GeneralNotes,
+            MajorEvents = latestReport.ShiftHandover!.MajorEvents ?? string.Empty,
+            EquipmentIssues = latestReport.ShiftHandover!.EquipmentIssues ?? string.Empty,
+            SafetyConcerns = latestReport.ShiftHandover!.SafetyConcerns ?? string.Empty,
+            ProductionConcerns = latestReport.ShiftHandover!.ProductionConcerns ?? string.Empty,
+            OutstandingActions = latestReport.ShiftHandover!.OutstandingActions ?? string.Empty,
+            GeneralNotes = latestReport.ShiftHandover!.GeneralNotes ?? string.Empty,
             ActiveActions = activeActions,
             EquipmentStatus = equipmentStatus
         };
@@ -86,12 +86,12 @@ public class HandoverService
                 Date = sr.Date,
                 Shift = sr.Shift,
                 SupervisorName = sr.Supervisor.FullName,
-                MajorEvents = sr.ShiftHandover!.MajorEvents,
-                EquipmentIssues = sr.ShiftHandover.EquipmentIssues,
-                SafetyConcerns = sr.ShiftHandover.SafetyConcerns,
-                ProductionConcerns = sr.ShiftHandover.ProductionConcerns,
-                OutstandingActions = sr.ShiftHandover.OutstandingActions,
-                GeneralNotes = sr.ShiftHandover.GeneralNotes
+                MajorEvents = sr.ShiftHandover!.MajorEvents ?? string.Empty,
+                EquipmentIssues = sr.ShiftHandover!.EquipmentIssues ?? string.Empty,
+                SafetyConcerns = sr.ShiftHandover!.SafetyConcerns ?? string.Empty,
+                ProductionConcerns = sr.ShiftHandover!.ProductionConcerns ?? string.Empty,
+                OutstandingActions = sr.ShiftHandover!.OutstandingActions ?? string.Empty,
+                GeneralNotes = sr.ShiftHandover!.GeneralNotes ?? string.Empty
             })
             .ToList();
     }

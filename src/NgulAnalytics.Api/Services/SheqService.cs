@@ -59,7 +59,7 @@ public class SheqService
         if (endDate.HasValue)
             query = query.Where(so => so.ShiftReport.Date <= endDate.Value);
 
-        return await query.SumAsync(so => so.Incidents);
+        return await query.SumAsync(so => (int?)so.Incidents) ?? 0;
     }
 
     public async Task<SheqKpiDto> GetSheqKpisAsync(DateTime? startDate = null, DateTime? endDate = null)

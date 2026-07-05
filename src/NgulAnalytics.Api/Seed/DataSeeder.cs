@@ -237,7 +237,7 @@ public class DataSeeder
                         FeedGrade = section.Name == "Milling" ? 2.8m + (decimal)(_random.NextDouble() * 0.6 - 0.3) : 0,
                         RecoveryPercentage = section.Name == "Flotation" ? 88 + (decimal)(_random.NextDouble() * 8 - 4) : 0,
                         ConcentrateProduced = section.Name == "Flotation" ? 850 + (decimal)(_random.NextDouble() * 200 - 100) : 0,
-                        Comments = _random.Next(5) == 0 ? "Normal operations" : null
+                        Comments = _random.Next(5) == 0 ? "Normal operations" : string.Empty
                     };
                     _context.ProductionEntries.Add(productionEntry);
 
@@ -285,8 +285,8 @@ public class DataSeeder
                         ShiftReportId = report.Id,
                         Incidents = _random.Next(3),
                         NearMisses = _random.Next(5),
-                        SafetyObservations = _random.Next(5) == 0 ? "All PPE compliance maintained" : null,
-                        EnvironmentalObservations = _random.Next(5) == 0 ? "No environmental incidents" : null,
+                        SafetyObservations = _random.Next(5) == 0 ? "All PPE compliance maintained" : string.Empty,
+                        EnvironmentalObservations = _random.Next(5) == 0 ? "No environmental incidents" : string.Empty,
                         AirQualityScore = 85 + (decimal)(_random.NextDouble() * 15),
                         DustLevel = (decimal)(_random.NextDouble() * 2),
                         HeatIndex = 22 + (decimal)(_random.NextDouble() * 8)
@@ -298,7 +298,7 @@ public class DataSeeder
                         var oxygenStart = 19.5m + (decimal)(_random.NextDouble() * 1.5);
                         var oxygenMid = 19.5m + (decimal)(_random.NextDouble() * 1.5);
                         var oxygenFinish = 19.5m + (decimal)(_random.NextDouble() * 1.5);
-                        
+
                         // Occasionally create critical oxygen readings
                         if (_random.Next(20) == 0) oxygenStart = 18.5m + (decimal)(_random.NextDouble() * 0.8);
                         if (_random.Next(20) == 0) oxygenMid = 18.5m + (decimal)(_random.NextDouble() * 0.8);

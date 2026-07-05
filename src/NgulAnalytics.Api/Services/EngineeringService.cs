@@ -49,7 +49,7 @@ public class EngineeringService
 
         // Service Compliance
         var totalDue = equipmentList.Count;
-        var onTimeServices = equipmentList.Count(e => 
+        var onTimeServices = equipmentList.Count(e =>
             e.MaintenanceRecords.Any(mr => mr.PerformedAt > DateTime.UtcNow.AddMonths(-1)));
         var compliance = totalDue > 0 ? (onTimeServices / (decimal)totalDue) * 100 : 100;
 
@@ -92,7 +92,7 @@ public class EngineeringService
 
         // Service history score (25%)
         var lastService = equipment.MaintenanceRecords.OrderByDescending(m => m.PerformedAt).FirstOrDefault();
-        var serviceScore = lastService != null 
+        var serviceScore = lastService != null
             ? Math.Max(0, 100 - ((DateTime.UtcNow - lastService.PerformedAt).Days * 2))
             : 50;
 

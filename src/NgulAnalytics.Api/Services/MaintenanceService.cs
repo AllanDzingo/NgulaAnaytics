@@ -23,8 +23,8 @@ public class MaintenanceService
         return equipment.Where(e =>
         {
             var lastService = e.MaintenanceRecords.OrderByDescending(m => m.PerformedAt).FirstOrDefault();
-            var hoursSinceService = lastService != null 
-                ? e.CurrentOperatingHours - lastService.HoursAtService 
+            var hoursSinceService = lastService != null
+                ? e.CurrentOperatingHours - lastService.HoursAtService
                 : e.CurrentOperatingHours;
             return hoursSinceService >= e.ServiceIntervalHours;
         }).ToList();

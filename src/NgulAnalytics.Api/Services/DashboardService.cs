@@ -18,9 +18,9 @@ public class DashboardService
         var productionKpis = await new ProductionService(_context).GetKpisAsync();
         var engineeringKpis = await new EngineeringService(_context).GetKpisAsync();
         var totalIncidents = await new SheqService(_context).GetTotalIncidentsAsync();
-        
+
         var openActions = await _context.Actions.CountAsync(a => a.Status == "Open" || a.Status == "InProgress");
-        var overdueActions = await _context.Actions.CountAsync(a => 
+        var overdueActions = await _context.Actions.CountAsync(a =>
             a.Status != "Closed" && a.DueDate < DateTime.UtcNow);
 
         var recentAlerts = await _context.Alerts

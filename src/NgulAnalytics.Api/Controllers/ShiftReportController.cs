@@ -89,7 +89,7 @@ public class ShiftReportController : ControllerBase
                 FeedGrade = request.ProductionEntry.FeedGrade,
                 RecoveryPercentage = request.ProductionEntry.RecoveryPercentage,
                 ConcentrateProduced = request.ProductionEntry.ConcentrateProduced,
-                Comments = request.ProductionEntry.Comments
+                Comments = request.ProductionEntry.Comments ?? string.Empty
             });
         }
 
@@ -141,8 +141,8 @@ public class ShiftReportController : ControllerBase
                 // Generate alerts
                 if (dto.NoiseLevel > 85)
                 {
-                    await _alertService.CreateAlertAsync("Safety", "Warning", 
-                        $"High noise level on equipment {dto.EquipmentId}", 
+                    await _alertService.CreateAlertAsync("Safety", "Warning",
+                        $"High noise level on equipment {dto.EquipmentId}",
                         $"Noise level: {dto.NoiseLevel} dB", dto.EquipmentId);
                 }
             }
@@ -156,8 +156,8 @@ public class ShiftReportController : ControllerBase
                 ShiftReportId = report.Id,
                 Incidents = request.SheqObservation.Incidents,
                 NearMisses = request.SheqObservation.NearMisses,
-                SafetyObservations = request.SheqObservation.SafetyObservations,
-                EnvironmentalObservations = request.SheqObservation.EnvironmentalObservations,
+                SafetyObservations = request.SheqObservation.SafetyObservations ?? string.Empty,
+                EnvironmentalObservations = request.SheqObservation.EnvironmentalObservations ?? string.Empty,
                 AirQualityScore = request.SheqObservation.AirQualityScore,
                 DustLevel = request.SheqObservation.DustLevel,
                 HeatIndex = request.SheqObservation.HeatIndex
@@ -188,17 +188,17 @@ public class ShiftReportController : ControllerBase
             });
 
             // Auto-generate critical action for low oxygen
-            if (request.UndergroundReading.OxygenLevelStart < 19.5m || 
-                request.UndergroundReading.OxygenLevelMidshift < 19.5m || 
+            if (request.UndergroundReading.OxygenLevelStart < 19.5m ||
+                request.UndergroundReading.OxygenLevelMidshift < 19.5m ||
                 request.UndergroundReading.OxygenLevelFinish < 19.5m)
             {
                 var reading = await _context.UndergroundReadings
                     .Include(ur => ur.ShiftReport)
                     .ThenInclude(sr => sr.Supervisor)
                     .FirstAsync(ur => ur.ShiftReportId == report.Id);
-                
+
                 await _actionService.AutoGenerateFromUndergroundAsync(reading);
-                
+
                 await _alertService.CreateAlertAsync("Safety", "Critical",
                     "CRITICAL: Low oxygen in Underground",
                     $"Oxygen levels below 19.5%");

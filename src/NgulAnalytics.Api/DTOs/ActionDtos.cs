@@ -15,7 +15,7 @@ public class CreateActionRequest
     public DateTime DueDate { get; set; }
 }
 
-public class CreateActionDto : CreateActionRequest {}
+public class CreateActionDto : CreateActionRequest { }
 
 public class UpdateActionRequest
 {
@@ -24,7 +24,7 @@ public class UpdateActionRequest
     public DateTime? DueDate { get; set; }
 }
 
-public class UpdateActionDto : UpdateActionRequest {}
+public class UpdateActionDto : UpdateActionRequest { }
 
 public class ActionItemDto
 {
