@@ -33,9 +33,21 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Database
+// Database - prioritize DATABASE_URL from Fly.io environment, fallback to config
+var dbUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Convert Fly.io DATABASE_URL format (postgres://user:pass@host:5432/db) to Npgsql format
+var connectionString = dbUrl;
+if (!string.IsNullOrEmpty(dbUrl) && (dbUrl.StartsWith("postgres://") || dbUrl.StartsWith("postgresql://")))
+{
+    var uri = new Uri(dbUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    connectionString = $"Host={uri.Host};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};Port={uri.Port}";
+}
+
 builder.Services.AddDbContext<NgulAnalyticsDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "NgulaAnalyticsSuperSecretKey2025!";
