@@ -181,9 +181,10 @@ var app = builder.Build();
 // HTTPS redirection so the platform health check succeeds immediately.
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
-// Seed data. This is wrapped so that a database issue never crashes the
-// process on startup (which previously caused the VM to restart in a loop).
-// Seeding runs in the background so the app can start serving /health right away.
+// Essential seeding (schema + roles/users/sections/equipment) runs
+// synchronously BEFORE the app starts serving so that login works immediately.
+// This is small and fast. A DB failure here is logged but never crashes the
+// process (which previously caused the VM to restart in a loop).
 using (var scope = app.Services.CreateScope())
 {
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
@@ -191,14 +192,37 @@ using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<NgulAnalyticsDbContext>();
         var seeder = new DataSeeder(context);
-        await seeder.SeedAsync();
-        logger.LogInformation("Database seeding completed successfully.");
+        await seeder.SeedEssentialAsync();
+        logger.LogInformation("Essential database seeding completed successfully.");
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Database seeding failed. The API will still start; check the DATABASE connection.");
+        logger.LogError(ex, "Essential database seeding failed. The API will still start; check the DATABASE connection.");
     }
 }
+
+// Heavy demo data (60 days of shift reports, maintenance history, large
+// client-supplied JSON datasets) is generated AFTER startup on a background
+// task using its own DI scope. This lets app.Run() be reached immediately so
+// the platform health check on /health passes right away, instead of the
+// process hanging for minutes and the VM being rebooted in a loop.
+_ = Task.Run(async () =>
+{
+    using var scope = app.Services.CreateScope();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var context = scope.ServiceProvider.GetRequiredService<NgulAnalyticsDbContext>();
+        var seeder = new DataSeeder(context);
+        await seeder.SeedDemoDataAsync();
+        logger.LogInformation("Background demo-data seeding completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Background demo-data seeding failed. Login and core APIs still work.");
+    }
+});
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

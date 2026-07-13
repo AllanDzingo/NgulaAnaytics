@@ -19,7 +19,18 @@ public class DataSeeder
     }
 
 
-    public async Task SeedAsync()
+    // Fast, essential seeding: creates the schema and the small set of rows
+    // that LOGIN and basic navigation depend on (roles, users, sections,
+    // equipment). This MUST complete quickly and BEFORE the app starts serving
+    // so /health passes and users can log in immediately.
+    //
+    // The heavy demo data (60 days of shift reports, maintenance history, the
+    // large client-supplied JSON datasets) is intentionally NOT done here — it
+    // is generated afterwards by SeedDemoDataAsync running in the background.
+    // Previously everything ran synchronously before app.Run(), which took
+    // minutes against remote Postgres, so the Fly health check on port 5000
+    // never became reachable and the machine rebooted in an endless loop.
+    public async Task SeedEssentialAsync()
     {
         // This demo project ships without EF migrations, so EnsureCreated builds
         // the schema directly from the model. (MigrateAsync would do nothing here
@@ -36,17 +47,35 @@ public class DataSeeder
 
         if (await _context.Users.AnyAsync()) return; // Already seeded
 
-
         await SeedRolesAsync();
         await SeedUsersAsync();
         await SeedSectionsAsync();
         await SeedEquipmentCategoriesAsync();
         await SeedEquipmentAsync();
         await SeedProductionTargetsAsync();
-        await SeedShiftReportsAsync();
-        await SeedMaintenanceRecordsAsync();
-        await SeedActionsAsync();
-        await SeedAlertsAsync();
+
+        await _context.SaveChangesAsync();
+    }
+
+    // Heavy demo-data seeding. Safe to run in the background after startup and
+    // idempotent: each sub-seeder checks whether its data already exists, so a
+    // restart mid-way simply resumes. Runs only once the essential data exists.
+    public async Task SeedDemoDataAsync()
+    {
+        // If shift reports already exist we've already generated the demo data.
+        if (await _context.ShiftReports.AnyAsync()
+            && await _context.PlantProductionRecords.AnyAsync())
+        {
+            return;
+        }
+
+        if (!await _context.ShiftReports.AnyAsync())
+        {
+            await SeedShiftReportsAsync();
+            await SeedMaintenanceRecordsAsync();
+            await SeedActionsAsync();
+            await SeedAlertsAsync();
+        }
 
         // Real client-supplied datasets (PGM Concentrator 400 tph)
         await SeedPlantProductionRecordsAsync();
@@ -54,6 +83,7 @@ public class DataSeeder
 
         await _context.SaveChangesAsync();
     }
+
 
     // ---------------------------------------------------------------------
     // Client-supplied datasets, loaded from JSON bundled with the API.
