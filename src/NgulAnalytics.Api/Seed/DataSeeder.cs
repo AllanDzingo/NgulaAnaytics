@@ -45,9 +45,23 @@ public class DataSeeder
             await _context.Database.EnsureCreatedAsync();
         }
 
-        if (await _context.Users.AnyAsync()) return; // Already seeded
+        // Guard the "already seeded" check. If a previous crash loop left the
+        // database in a half-created state, EnsureCreatedAsync sees the DB
+        // "exists" and skips creating the missing tables, so querying Users can
+        // throw "relation does not exist". Treat any such error as "not seeded
+        // yet" and (re)run the essential seeders, which are idempotent enough
+        // for a fresh/empty schema.
+        try
+        {
+            if (await _context.Users.AnyAsync()) return; // Already seeded
+        }
+        catch
+        {
+            // Fall through and attempt to seed.
+        }
 
         await SeedRolesAsync();
+
         await SeedUsersAsync();
         await SeedSectionsAsync();
         await SeedEquipmentCategoriesAsync();

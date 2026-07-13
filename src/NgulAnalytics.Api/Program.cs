@@ -177,9 +177,43 @@ builder.Services.AddScoped<UserService>();
 
 var app = builder.Build();
 
+// Offline seeding mode: run the FULL seed (essential + heavy demo data)
+// synchronously and then exit, without starting the web server. Use this to
+// pre-populate a database (e.g. production) before/without a deploy:
+//
+//   1) fly proxy 5433:5432 -a <postgres-app>
+//   2) set DATABASE_URL=postgres://user:pass@localhost:5433/ngula_analytics
+//   3) dotnet run --project src/NgulAnalytics.Api -- --seed-only
+//
+// Because the data is then already present, the app's startup seeding becomes
+// a no-op and the app comes up instantly with full data.
+if (args.Contains("--seed-only"))
+{
+    using var seedScope = app.Services.CreateScope();
+    var seedLogger = seedScope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var context = seedScope.ServiceProvider.GetRequiredService<NgulAnalyticsDbContext>();
+        var seeder = new DataSeeder(context);
+        seedLogger.LogInformation("[--seed-only] Seeding essential data...");
+        await seeder.SeedEssentialAsync();
+        seedLogger.LogInformation("[--seed-only] Seeding demo data (this can take a few minutes)...");
+        await seeder.SeedDemoDataAsync();
+        seedLogger.LogInformation("[--seed-only] Seeding complete. Exiting.");
+        return;
+    }
+    catch (Exception ex)
+    {
+        seedLogger.LogError(ex, "[--seed-only] Seeding failed.");
+        Environment.ExitCode = 1;
+        return;
+    }
+}
+
 // Health endpoint MUST be registered first and be reachable without auth or
 // HTTPS redirection so the platform health check succeeds immediately.
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
 
 // Essential seeding (schema + roles/users/sections/equipment) runs
 // synchronously BEFORE the app starts serving so that login works immediately.
@@ -241,9 +275,34 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-// Serve frontend static files (React build copied into wwwroot)
+// Serve frontend static files (React build copied into wwwroot).
+//
+// index.html must NEVER be cached: it's the entry point that references the
+// hash-named JS/CSS bundles. If the browser caches index.html (and gets 304s),
+// it keeps loading an OLD bundle after every deploy — which is exactly what
+// caused the login page to keep using stale code. The hashed asset files
+// (index-<hash>.js/.css) are content-addressed, so they're safe to cache
+// forever.
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        var path = ctx.File.Name;
+        if (path.Equals("index.html", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
+            ctx.Context.Response.Headers.Pragma = "no-cache";
+            ctx.Context.Response.Headers.Expires = "0";
+        }
+        else
+        {
+            // Hashed, content-addressed assets can be cached aggressively.
+            ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+        }
+    }
+});
+
 
 app.UseCors();
 app.UseAuthentication();
@@ -252,7 +311,20 @@ app.MapControllers();
 
 // SPA fallback: any non-API, non-file route serves index.html so client-side
 // routing works when the app is deployed as a single container.
-app.MapFallbackToFile("index.html");
+//
+// MapFallbackToFile does NOT run the UseStaticFiles OnPrepareResponse callback,
+// so we set no-cache headers here too. Without this the browser can 304 the
+// HTML entry point and keep loading a stale JS bundle after a deploy.
+app.MapFallbackToFile("index.html", new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
+        ctx.Context.Response.Headers.Pragma = "no-cache";
+        ctx.Context.Response.Headers.Expires = "0";
+    }
+});
+
 
 app.Run();
 

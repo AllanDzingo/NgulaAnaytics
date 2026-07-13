@@ -70,9 +70,10 @@ export function Login() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-[var(--slate-400)] uppercase tracking-wider mb-1.5">
+              <label htmlFor="login-email" className="block text-xs font-semibold text-[var(--slate-400)] uppercase tracking-wider mb-1.5">
                 Email Address
               </label>
+
               <div className="relative">
                 <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--slate-500)]" />
                 <input
@@ -88,9 +89,10 @@ export function Login() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[var(--slate-400)] uppercase tracking-wider mb-1.5">
+              <label htmlFor="login-password" className="block text-xs font-semibold text-[var(--slate-400)] uppercase tracking-wider mb-1.5">
                 Password
               </label>
+
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--slate-500)]" />
                 <input
