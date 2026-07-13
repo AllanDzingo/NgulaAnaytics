@@ -19,10 +19,16 @@ primary_region = 'ams'
 [http_service]
   internal_port = 5000
   force_https = true
-  auto_stop_machines = 'stop'
+  # Keep one machine always running. With auto_stop + min=0 the VM was being
+  # shut down when idle (see "App has excess capacity, autostopping machine"
+  # in the logs). On the next cold hit it had to boot AND re-run the full
+  # DataSeeder before serving, which made the demo look broken/slow. Keeping a
+  # machine warm avoids the cold-start re-seed and gives instant logins.
+  auto_stop_machines = 'off'
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ['app']
+
 
   [http_service.concurrency]
     type = 'connections'

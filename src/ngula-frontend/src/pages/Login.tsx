@@ -13,6 +13,11 @@ export function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // NOTE: These must match the credentials created by the backend DataSeeder
+  // (src/NgulAnalytics.Api/Seed/DataSeeder.cs -> CreateUser). The password is
+  // "Demo@2025". Previously this page used "Ngula2025!", which did not match
+  // the seeded hash, so every demo button produced "invalid credentials".
+  const DEMO_PASSWORD = 'Demo@2025';
   const demoUsers = [
     { label: 'Executive', email: 'exec@ngula.demo' },
     { label: 'Engineering', email: 'engineer@ngula.demo' },
@@ -20,6 +25,7 @@ export function Login() {
     { label: 'SHEQ', email: 'sheq@ngula.demo' },
     { label: 'Supervisor', email: 'supervisor@ngula.demo' },
   ];
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,14 +139,16 @@ export function Login() {
           {/* Demo users */}
           <div className="mt-6 pt-6 border-t border-[var(--slate-600)]/40">
             <p className="text-xs font-semibold text-[var(--slate-500)] uppercase tracking-wider mb-3 text-center">
-              Demo Accounts (password: <span className="font-mono text-[var(--gold-400)]">Ngula2025!</span>)
+              Demo Accounts (password: <span className="font-mono text-[var(--gold-400)]">{DEMO_PASSWORD}</span>)
+
             </p>
             <div className="grid grid-cols-2 gap-2">
               {demoUsers.map(u => (
                 <button
                   key={u.email}
                   type="button"
-                  onClick={() => { setEmail(u.email); setPassword('Ngula2025!'); }}
+                  onClick={() => { setEmail(u.email); setPassword(DEMO_PASSWORD); }}
+
                   className="text-left px-3 py-2 rounded-lg text-xs bg-[var(--navy-700)] hover:bg-[var(--navy-600)] border border-[var(--slate-600)]/40 hover:border-[var(--gold-500)]/40 transition-all"
                 >
                   <span className="font-semibold text-[var(--gold-400)]">{u.label}</span>

@@ -78,9 +78,57 @@ curl -X POST https://ngula-analytics.fly.dev/api/auth/login \
 # Expect: 200 with a JWT token
 ```
 
+## Exact DATABASE_URL secret for this cluster
+
+Fly gave two connection strings:
+
+| Type              | URL |
+|-------------------|-----|
+| **Direct** (use this) | `postgresql://fly-user:...@direct.n83v7rgw91l05gxk.flympg.net/fly-db` |
+| Pooled (PgBouncer)    | `postgresql://fly-user:...@pgbouncer.n83v7rgw91l05gxk.flympg.net/fly-db` |
+
+**Use the DIRECT url**, not the pgbouncer one. EF Core's `EnsureCreated`/schema
+work and Npgsql's prepared statements don't play well with a transaction-mode
+pooler. (The app now auto-detects a `pgbouncer`/`pooler` host and disables
+prepared statements as a safety net, but direct is still preferred for the
+schema-building + seeding this demo does.)
+
+Set it once:
+
+```bash
+fly secrets set \
+  DATABASE_URL="postgresql://fly-user:NBiraHPGGyACzK9gvYtmjA9s@direct.n83v7rgw91l05gxk.flympg.net/fly-db" \
+  --app ngula-analytics
+```
+
+Notes on the format:
+- No explicit port → the app defaults to `5432`.
+- No `?sslmode=require` needed → the app **forces** `SSL Mode=Require` for all
+  managed hosts, so TLS is always on.
+
+Then redeploy: `fly deploy --app ngula-analytics`.
+
+## Resilience built into the app (so you don't hit DB issues again)
+
+`Program.cs` now configures the Npgsql connection with:
+- `SSL Mode=Require` (always TLS on managed Postgres)
+- `Timeout=30`, `CommandTimeout=60`, `KeepAlive=30` (survive idle NAT / brief stalls)
+- `MaxPoolSize=20`
+- Auto-disable of prepared statements when the host is a pooler
+- **`EnableRetryOnFailure(5, 10s)`** — transient connection drops are retried
+  automatically instead of throwing, which is the main guard against sporadic
+  "database" errors.
+
+Combined with `min_machines_running = 1` in `fly.toml` (machine stays warm, no
+cold-start re-seed), demo logins should be reliable.
+
 ## Notes
 
 - Seeding is idempotent: it only runs when the `Users` table is empty, so redeploys
   are safe.
 - The seeder uses `EnsureCreatedAsync()` (no EF migrations shipped), so it builds the
   schema on first connection to an empty database.
+- **Rotate that password** after the demo — it is now in your shell history and this
+  doc. Regenerate credentials in the Fly dashboard and re-run `fly secrets set`.
+
+

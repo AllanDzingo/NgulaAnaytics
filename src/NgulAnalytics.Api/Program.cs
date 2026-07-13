@@ -68,6 +68,13 @@ if (!string.IsNullOrEmpty(dbUrl) && (dbUrl.StartsWith("postgres://") || dbUrl.St
     var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty;
     var dbPort = uri.Port > 0 ? uri.Port : 5432;
 
+    // Detect a connection-pooler host (Fly's PgBouncer, Supabase pooler, etc.).
+    // Transaction-mode poolers don't support server-side prepared statements,
+    // which Npgsql uses by default and which breaks EnsureCreated/EF queries.
+    // When we're talking to a pooler we must disable prepared statements.
+    var isPooler = uri.Host.Contains("pgbouncer", StringComparison.OrdinalIgnoreCase)
+                || uri.Host.Contains("pooler", StringComparison.OrdinalIgnoreCase);
+
     // Managed Postgres providers (Fly.io, Railway, Supabase, etc.) require TLS.
     // Trust the server certificate since these platforms use their own CA.
     var builderNpgsql = new Npgsql.NpgsqlConnectionStringBuilder
@@ -78,11 +85,22 @@ if (!string.IsNullOrEmpty(dbUrl) && (dbUrl.StartsWith("postgres://") || dbUrl.St
         Database = uri.AbsolutePath.TrimStart('/'),
         Username = username,
         Password = password,
-        SslMode = Npgsql.SslMode.Require
+        SslMode = Npgsql.SslMode.Require,
+
+        // Resilience settings so transient network blips against managed
+        // Postgres don't manifest as hard failures / seeding crashes.
+        Timeout = 30,                 // seconds to establish a connection
+        CommandTimeout = 60,          // seconds for a single command
+        KeepAlive = 30,               // send TCP keepalives to survive idle NAT
+        MaxPoolSize = 20,
+        // When behind a transaction pooler, Npgsql must NOT use server-side
+        // prepared statements (the pooler multiplexes connections).
+        MaxAutoPrepare = isPooler ? 0 : 20,
     };
 
     connectionString = builderNpgsql.ConnectionString;
 }
+
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
@@ -95,7 +113,17 @@ if (string.IsNullOrWhiteSpace(connectionString))
 }
 
 builder.Services.AddDbContext<NgulAnalyticsDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString, npgsql =>
+    {
+        // Automatically retry transient failures (dropped connections, brief
+        // pooler/network hiccups) instead of throwing. This is the main guard
+        // against "random" DB errors on managed Postgres.
+        npgsql.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorCodesToAdd: null);
+    }));
+
 
 
 // JWT Authentication
