@@ -26,6 +26,11 @@ public class NgulAnalyticsDbContext : DbContext
     public DbSet<ActionComment> ActionComments => Set<ActionComment>();
     public DbSet<Alert> Alerts => Set<Alert>();
 
+    // Client-supplied PGM Concentrator datasets
+    public DbSet<PlantProductionRecord> PlantProductionRecords => Set<PlantProductionRecord>();
+    public DbSet<EquipmentConditionRecord> EquipmentConditionRecords => Set<EquipmentConditionRecord>();
+
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

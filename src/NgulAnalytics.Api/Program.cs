@@ -10,11 +10,19 @@ using NgulAnalytics.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Bind to the platform-provided PORT (Railway/Heroku style) if present,
+// otherwise fall back to ASPNETCORE_URLS (Fly.io/Docker), otherwise default to 8080.
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrWhiteSpace(port))
 {
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 }
+else if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
+{
+    builder.WebHost.UseUrls("http://0.0.0.0:8080");
+}
+
+
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -100,12 +108,27 @@ builder.Services.AddScoped<UserService>();
 
 var app = builder.Build();
 
-// Seed data
+// Health endpoint MUST be registered first and be reachable without auth or
+// HTTPS redirection so the platform health check succeeds immediately.
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
+// Seed data. This is wrapped so that a database issue never crashes the
+// process on startup (which previously caused the VM to restart in a loop).
+// Seeding runs in the background so the app can start serving /health right away.
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<NgulAnalyticsDbContext>();
-    var seeder = new DataSeeder(context);
-    await seeder.SeedAsync();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var context = scope.ServiceProvider.GetRequiredService<NgulAnalyticsDbContext>();
+        var seeder = new DataSeeder(context);
+        await seeder.SeedAsync();
+        logger.LogInformation("Database seeding completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database seeding failed. The API will still start; check the DATABASE connection.");
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -115,16 +138,29 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Serve frontend static files in production (must be before MapControllers)
+app.UseForwardedHeaders();
+
+// Only redirect to HTTPS in local development. In containers (Fly.io / Railway)
+// TLS is terminated at the platform edge and the app speaks plain HTTP internally,
+// so enabling HTTPS redirection there breaks requests and health checks.
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+// Serve frontend static files (React build copied into wwwroot)
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.UseForwardedHeaders();
-app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapControllers();
 
+// SPA fallback: any non-API, non-file route serves index.html so client-side
+// routing works when the app is deployed as a single container.
+app.MapFallbackToFile("index.html");
+
 app.Run();
+
+

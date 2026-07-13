@@ -18,4 +18,11 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Bundle the client-supplied seed datasets with the published output -->
+    <Content Update="Seed\Data\*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+
+  </ItemGroup>
+
 </Project>
+

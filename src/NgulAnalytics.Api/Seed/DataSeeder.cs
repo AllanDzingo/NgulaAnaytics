@@ -4,6 +4,7 @@ using NgulAnalytics.Api.Data;
 using NgulAnalytics.Api.Models;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace NgulAnalytics.Api.Seed;
 
@@ -17,11 +18,24 @@ public class DataSeeder
         _context = context;
     }
 
+
     public async Task SeedAsync()
     {
-        await _context.Database.MigrateAsync();
+        // This demo project ships without EF migrations, so EnsureCreated builds
+        // the schema directly from the model. (MigrateAsync would do nothing here
+        // because there are no migrations, leaving tables missing and crashing
+        // the app on the first query — which caused the deploy restart loop.)
+        if (_context.Database.GetPendingMigrations().Any() || _context.Database.GetMigrations().Any())
+        {
+            await _context.Database.MigrateAsync();
+        }
+        else
+        {
+            await _context.Database.EnsureCreatedAsync();
+        }
 
         if (await _context.Users.AnyAsync()) return; // Already seeded
+
 
         await SeedRolesAsync();
         await SeedUsersAsync();
@@ -34,8 +48,93 @@ public class DataSeeder
         await SeedActionsAsync();
         await SeedAlertsAsync();
 
+        // Real client-supplied datasets (PGM Concentrator 400 tph)
+        await SeedPlantProductionRecordsAsync();
+        await SeedEquipmentConditionRecordsAsync();
+
         await _context.SaveChangesAsync();
     }
+
+    // ---------------------------------------------------------------------
+    // Client-supplied datasets, loaded from JSON bundled with the API.
+    // These are ingested verbatim from the customer's PGM Concentrator export.
+    // ---------------------------------------------------------------------
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    private string? ResolveDataFile(string fileName)
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "Seed", "Data", fileName),
+            Path.Combine(Directory.GetCurrentDirectory(), "Seed", "Data", fileName)
+        };
+        return candidates.FirstOrDefault(File.Exists);
+    }
+
+    private async Task SeedPlantProductionRecordsAsync()
+    {
+        if (await _context.PlantProductionRecords.AnyAsync()) return;
+
+        var path = ResolveDataFile("production-data.json");
+        if (path is null) return;
+
+        await using var stream = File.OpenRead(path);
+        var records = await JsonSerializer.DeserializeAsync<List<PlantProductionRecord>>(stream, JsonOpts);
+        if (records is { Count: > 0 })
+        {
+            foreach (var r in records)
+            {
+                r.Id = 0; // let the database assign identity
+                Normalise(r);
+            }
+            await _context.PlantProductionRecords.AddRangeAsync(records);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    private async Task SeedEquipmentConditionRecordsAsync()
+    {
+        if (await _context.EquipmentConditionRecords.AnyAsync()) return;
+
+        var path = ResolveDataFile("engineering-cm-data.json");
+        if (path is null) return;
+
+        await using var stream = File.OpenRead(path);
+        var records = await JsonSerializer.DeserializeAsync<List<EquipmentConditionRecord>>(stream, JsonOpts);
+        if (records is { Count: > 0 })
+        {
+            foreach (var r in records)
+            {
+                r.Id = 0;
+                Normalise(r);
+            }
+            await _context.EquipmentConditionRecords.AddRangeAsync(records);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    // Timestamps in the source file are naive (no timezone); mark them as UTC so
+    // Npgsql accepts them for 'timestamp with time zone' columns.
+    private static void Normalise(PlantProductionRecord r)
+    {
+        r.Timestamp = DateTime.SpecifyKind(r.Timestamp, DateTimeKind.Utc);
+        r.Date = DateTime.SpecifyKind(r.Date, DateTimeKind.Utc);
+    }
+
+    private static void Normalise(EquipmentConditionRecord r)
+    {
+        r.Timestamp = DateTime.SpecifyKind(r.Timestamp, DateTimeKind.Utc);
+        r.Date = DateTime.SpecifyKind(r.Date, DateTimeKind.Utc);
+        if (r.LastPmDate.HasValue)
+            r.LastPmDate = DateTime.SpecifyKind(r.LastPmDate.Value, DateTimeKind.Utc);
+        if (r.NextPmDate.HasValue)
+            r.NextPmDate = DateTime.SpecifyKind(r.NextPmDate.Value, DateTimeKind.Utc);
+    }
+
+
 
     private async Task SeedRolesAsync()
     {
@@ -204,7 +303,11 @@ public class DataSeeder
         var supervisors = await _context.Users.Where(u => u.Role == "Supervisor").ToListAsync();
         var shifts = new[] { "DAY", "AFT", "NGT" };
 
-        var startDate = DateTime.UtcNow.AddMonths(-12).Date;
+        // Seed the last 60 days only. Seeding a full year (365 days x 3 shifts x 6
+        // sections with a SaveChanges per iteration) took far too long on a small
+        // container, so the platform health-check timed out and the VM restarted
+        // in a loop. 60 days keeps the demo data meaningful while booting quickly.
+        var startDate = DateTime.UtcNow.AddDays(-60).Date;
         var endDate = DateTime.UtcNow.Date;
 
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
@@ -214,6 +317,7 @@ public class DataSeeder
                 foreach (var section in sections)
                 {
                     var supervisor = supervisors[_random.Next(supervisors.Count)];
+
                     var report = new ShiftReport
                     {
                         Date = date,

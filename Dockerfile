@@ -24,8 +24,9 @@ RUN npm ci --unsafe-perm
 
 # Copy frontend source and build
 COPY src/ngula-frontend/ ./
-RUN chmod +x node_modules/.bin/*
+RUN chmod +x node_modules/.bin/* || true
 RUN npm run build
+
 
 # ============================================
 # Stage 3: Runtime — ASP.NET + Static Files
@@ -48,7 +49,8 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 
 EXPOSE 5000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
     CMD curl -f http://localhost:5000/health || exit 1
+
 
 ENTRYPOINT ["dotnet", "NgulAnalytics.Api.dll"]
