@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\NgulAnalytics.Api.csproj": {}
+    "c:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\NgulAnalytics.Api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\NgulAnalytics.Api.csproj": {
+    "c:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\NgulAnalytics.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\NgulAnalytics.Api.csproj",
+        "projectUniqueName": "c:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\NgulAnalytics.Api.csproj",
         "projectName": "NgulAnalytics.Api",
-        "projectPath": "C:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\NgulAnalytics.Api.csproj",
+        "projectPath": "c:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\NgulAnalytics.Api.csproj",
         "packagesPath": "C:\\Users\\Hanco Sipsma\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\obj\\",
+        "outputPath": "c:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Hanco Sipsma\\AppData\\Roaming\\NuGet\\NuGet.Config"

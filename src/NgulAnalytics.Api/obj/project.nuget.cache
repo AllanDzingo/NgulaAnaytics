@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "tgccOSASAVI=",
+  "dgSpecHash": "Fkc5IZDnUtQ=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\NgulAnalytics.Api.csproj",
+  "projectFilePath": "c:\\Users\\Hanco Sipsma\\Desktop\\Allan 2025\\Ngula Analytics\\src\\NgulAnalytics.Api\\NgulAnalytics.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Hanco Sipsma\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\Hanco Sipsma\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",

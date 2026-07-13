@@ -45,17 +45,46 @@ builder.Services.AddCors(options =>
 var dbUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
     ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
-// Convert Fly.io DATABASE_URL format (postgres://user:pass@host:5432/db) to Npgsql format
+// Convert Fly.io / Railway DATABASE_URL format
+// (postgres://user:pass@host:5432/db?sslmode=require) to Npgsql key/value format.
 var connectionString = dbUrl;
 if (!string.IsNullOrEmpty(dbUrl) && (dbUrl.StartsWith("postgres://") || dbUrl.StartsWith("postgresql://")))
 {
     var uri = new Uri(dbUrl);
-    var userInfo = uri.UserInfo.Split(':');
-    connectionString = $"Host={uri.Host};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};Port={uri.Port}";
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var username = Uri.UnescapeDataString(userInfo[0]);
+    var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty;
+    var dbPort = uri.Port > 0 ? uri.Port : 5432;
+
+    // Managed Postgres providers (Fly.io, Railway, Supabase, etc.) require TLS.
+    // Trust the server certificate since these platforms use their own CA.
+    var builderNpgsql = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = dbPort,
+
+        Database = uri.AbsolutePath.TrimStart('/'),
+        Username = username,
+        Password = password,
+        SslMode = Npgsql.SslMode.Require
+    };
+
+    connectionString = builderNpgsql.ConnectionString;
+}
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    // Fail loudly at startup rather than silently skipping seeding, which
+    // previously left the app running with zero users and broken demo logins.
+    Console.Error.WriteLine(
+        "FATAL: No database connection string configured. " +
+        "Set the DATABASE_URL environment variable (e.g. `fly secrets set DATABASE_URL=...`) " +
+        "or ConnectionStrings:DefaultConnection.");
 }
 
 builder.Services.AddDbContext<NgulAnalyticsDbContext>(options =>
     options.UseNpgsql(connectionString));
+
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "NgulaAnalyticsSuperSecretKey2025!";

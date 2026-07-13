@@ -4,7 +4,10 @@
 #
 
 app = 'ngula-analytics'
-primary_region = 'lax'
+# Keep the app in the same region as the Postgres cluster (ams / Amsterdam)
+# to avoid cross-region latency and private-networking issues.
+primary_region = 'ams'
+
 
 [build]
   dockerfile = 'Dockerfile'
