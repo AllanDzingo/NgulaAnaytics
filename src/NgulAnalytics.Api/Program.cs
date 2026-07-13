@@ -31,15 +31,27 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // CORS
+// The SPA is served from the SAME origin/container as the API in production,
+// so same-origin requests never hit CORS. We still allow local dev origins
+// (Vite on :5173, CRA on :3000) plus any origins listed in the CORS_ORIGINS
+// env var (comma-separated) for the case where the frontend is hosted
+// separately (e.g. a different Fly/Railway app or a custom domain).
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+        var extraOrigins = (Environment.GetEnvironmentVariable("CORS_ORIGINS") ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        policy.WithOrigins(
+                  new[] { "http://localhost:5173", "http://localhost:3000" }
+                      .Concat(extraOrigins)
+                      .ToArray())
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
+
 
 // Database - prioritize DATABASE_URL from Fly.io environment, fallback to config
 var dbUrl = Environment.GetEnvironmentVariable("DATABASE_URL")

@@ -1,9 +1,19 @@
 import axios, { AxiosError } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// In production the SPA is served from the same origin/container as the API,
+// so we use a RELATIVE "/api" path (empty base) and the browser hits the same
+// host that served the page. Only in local dev (Vite on :5173) do we point at
+// the API dev server. VITE_API_URL can still override this if ever needed.
+//
+// import.meta.env.DEV is true only under `vite dev`; in the production build it
+// is false, so the built container correctly uses the relative path.
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
 export const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/api`,
+
   headers: {
     'Content-Type': 'application/json',
   },
