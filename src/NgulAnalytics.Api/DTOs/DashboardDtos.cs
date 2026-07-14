@@ -1,4 +1,4 @@
-namespace NgulAnalytics.Api.DTOs;
+namespace ngulAnalytics.Api.DTOs;
 
 public class ExecutiveSummaryDto
 {

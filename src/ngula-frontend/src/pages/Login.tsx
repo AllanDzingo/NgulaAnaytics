@@ -45,7 +45,7 @@ export function Login() {
     <div
       className="min-h-screen flex items-center justify-center p-4"
       style={{
-        background: 'radial-gradient(ellipse at 30% 50%, rgba(212,168,67,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 20%, rgba(30,60,114,0.6) 0%, transparent 50%), var(--navy-900)',
+        background: 'radial-gradient(ellipse at 30% 50%, rgba(212,168,67,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 20%, rgba(189,159,114,0.5) 0%, transparent 50%), var(--navy-900)',
       }}
     >
       {/* Animated background grid */}
