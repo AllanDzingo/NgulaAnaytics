@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, getHomePathForRole } from '@/contexts/AuthContext';
+
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { Login } from '@/pages/Login';
 import { ExecutiveDashboard } from '@/pages/executive/Dashboard';
@@ -27,6 +28,18 @@ function ProtectedRoute({ children, requiredRole = 'All' }: { children: React.Re
   return <>{children}</>;
 }
 
+// The root "/" path shows the Executive overview only to executives. Every
+// other role is redirected to their own department dashboard so login lands
+// each user on their most relevant KPIs.
+function HomeRoute() {
+  const { user } = useAuth();
+  if (user && user.role !== 'Executive') {
+    return <Navigate to={getHomePathForRole(user.role)} replace />;
+  }
+  return <ExecutiveDashboard />;
+}
+
+
 export default function App() {
   return (
     <Routes>
@@ -37,7 +50,8 @@ export default function App() {
           <ProtectedRoute>
             <DashboardLayout>
               <Routes>
-                <Route path="/" element={<ExecutiveDashboard />} />
+                <Route path="/" element={<HomeRoute />} />
+
                 <Route path="/production" element={<ProductionDashboard />} />
                 <Route path="/production/targets" element={<ProductionTargets />} />
                 <Route path="/engineering" element={<EngineeringDashboard />} />

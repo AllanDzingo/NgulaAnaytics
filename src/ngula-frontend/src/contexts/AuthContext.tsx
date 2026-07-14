@@ -10,9 +10,27 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   hasRole: (role: string) => boolean;
+  homePath: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Each role lands on the dashboard most relevant to them after login.
+// Executives get the cross-department overview; everyone else lands on
+// their own department dashboard.
+export const ROLE_HOME_PATHS: Record<string, string> = {
+  Executive: '/',
+  Production: '/production',
+  Engineering: '/engineering',
+  SHEQ: '/sheq',
+  Supervisor: '/handover',
+};
+
+export function getHomePathForRole(role?: string): string {
+  if (!role) return '/';
+  return ROLE_HOME_PATHS[role] ?? '/';
+}
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -63,11 +81,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return user.role === role || user.role === 'Executive';
   };
 
+  const homePath = getHomePathForRole(user?.role);
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, hasRole }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, hasRole, homePath }}>
       {children}
     </AuthContext.Provider>
   );
+
 }
 
 export function useAuth() {

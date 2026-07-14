@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { NgulaLogo } from './NgulaLogo';
 import {
+
   LayoutDashboard,
   Factory,
   Wrench,
@@ -46,16 +46,18 @@ export function Sidebar() {
       className={`flex flex-col bg-[var(--navy-800)] border-r border-[var(--slate-600)]/40 transition-all duration-300 ${collapsed ? 'w-[72px]' : 'w-[var(--sidebar-width)]'
         }`}
     >
-      {/* Logo */}
+      {/* Brand (logo lives in the dashboard header now) */}
       <div className="h-[var(--topbar-height)] flex items-center px-4 border-b border-[var(--slate-600)]/40">
-        <NgulaLogo className={collapsed ? 'w-8 h-8' : 'w-8 h-8'} />
-        {!collapsed && (
-          <div className="ml-3 overflow-hidden">
+        {collapsed ? (
+          <span className="mx-auto text-lg font-bold text-[var(--gold-400)]">N</span>
+        ) : (
+          <div className="overflow-hidden">
             <h1 className="text-sm font-bold text-[var(--white)] whitespace-nowrap">Ngula Analytics</h1>
             <p className="text-[10px] text-[var(--slate-400)] whitespace-nowrap">Mining Intelligence</p>
           </div>
         )}
       </div>
+
 
       {/* Navigation */}
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
