@@ -1,97 +1,137 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, AlertTriangle, Search, User } from 'lucide-react';
+import { Bell, AlertTriangle, Search, Menu } from 'lucide-react';
 import { alertsApi } from '@/api/client';
-import { useEffect } from 'react';
 import type { Alert } from '@/types';
 
-export function TopBar() {
+interface TopBarProps {
+  onMenuClick?: () => void;
+}
+
+export function TopBar({ onMenuClick }: TopBarProps) {
   const { user } = useAuth();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [showAlerts, setShowAlerts] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    alertsApi.getAll().then(res => setAlerts(res.data));
+    alertsApi.getAll().then((res) => setAlerts(res.data)).catch(() => {});
   }, []);
 
-  const unreadCount = alerts.filter(a => !a.isRead).length;
+  const unreadCount = alerts.filter((a) => !a.isRead).length;
 
   const markRead = async (id: number) => {
     await alertsApi.markRead(id);
-    setAlerts(prev => prev.map(a => a.id === id ? { ...a, isRead: true } : a));
+    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: true } : a)));
   };
 
+  const initials =
+    user?.fullName
+      ?.split(' ')
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() ?? 'U';
+
   return (
-    <header className="h-[var(--topbar-height)] bg-[var(--navy-800)]/80 backdrop-blur-md border-b border-[var(--slate-600)]/40 flex items-center justify-between px-6 sticky top-0 z-50">
-      {/* Search */}
-      <div className="relative w-96">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--slate-500)]" size={16} />
-        <input
-          type="text"
-          placeholder="Search reports, equipment, actions..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 pr-4 py-2 bg-[var(--navy-700)] border border-[var(--slate-600)]/50 rounded-lg text-sm text-[var(--white)] placeholder-[var(--slate-500)] focus:border-[var(--gold-500)] focus:ring-1 focus:ring-[var(--gold-500)]/20 w-full"
-        />
+    <header className="sticky top-0 z-50 flex h-[var(--topbar-height)] items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--bg-surface)]/85 px-4 backdrop-blur-md sm:px-6">
+      {/* Left: mobile menu + search */}
+      <div className="flex flex-1 items-center gap-3">
+        <button
+          onClick={onMenuClick}
+          className="rounded-lg p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-subtle)] hover:text-[var(--text-strong)] lg:hidden"
+          aria-label="Open navigation"
+        >
+          <Menu size={20} />
+        </button>
+
+        <div className="relative w-full max-w-md">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)]"
+            size={16}
+          />
+          <input
+            type="text"
+            placeholder="Search reports, equipment, actions…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="!bg-[var(--bg-subtle)] !border-transparent pl-9 text-sm"
+            style={{ paddingLeft: 36 }}
+          />
+        </div>
       </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-4">
+      {/* Right */}
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Alerts */}
         <div className="relative">
           <button
-            onClick={() => setShowAlerts(!showAlerts)}
-            className="relative p-2 rounded-lg hover:bg-[var(--navy-700)] transition-colors"
+            onClick={() => setShowAlerts((v) => !v)}
+            className="relative rounded-lg p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-subtle)] hover:text-[var(--text-strong)]"
+            aria-label="Notifications"
           >
-            <Bell size={20} className={unreadCount > 0 ? 'text-[var(--gold-400)]' : 'text-[var(--slate-400)]'} />
+            <Bell size={19} />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-[var(--red)] text-white text-[10px] font-bold flex items-center justify-center rounded-full">
+              <span className="absolute -right-0.5 -top-0.5 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[10px] font-bold leading-none text-white">
                 {unreadCount}
               </span>
             )}
           </button>
 
           {showAlerts && (
-            <div className="absolute right-0 top-full mt-2 w-96 glass-card z-50 max-h-[400px] overflow-y-auto">
-              <div className="p-3 border-b border-[var(--slate-600)]/40">
-                <h3 className="text-sm font-semibold text-[var(--white)]">Notifications</h3>
-              </div>
-              {alerts.length === 0 ? (
-                <p className="p-4 text-sm text-[var(--slate-400)] text-center">No notifications</p>
-              ) : (
-                alerts.map(alert => (
-                  <div
-                    key={alert.id}
-                    onClick={() => markRead(alert.id)}
-                    className={`p-3 border-b border-[var(--slate-600)]/20 cursor-pointer hover:bg-[var(--navy-700)]/50 transition-colors ${alert.isRead ? 'opacity-60' : ''
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowAlerts(false)} />
+              <div className="glass-card absolute right-0 top-full z-50 mt-2 max-h-[420px] w-[min(90vw,360px)] overflow-y-auto !shadow-pop">
+                <div className="sticky top-0 flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3">
+                  <h3 className="text-sm font-semibold text-[var(--text-strong)]">Notifications</h3>
+                  {unreadCount > 0 && (
+                    <span className="rounded-full bg-[var(--brand-tint)] px-2 py-0.5 text-[11px] font-semibold text-[var(--brand-strong)]">
+                      {unreadCount} new
+                    </span>
+                  )}
+                </div>
+                {alerts.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+                    <Bell size={22} className="text-[var(--text-faint)]" />
+                    <p className="text-sm text-[var(--text-muted)]">You're all caught up</p>
+                  </div>
+                ) : (
+                  alerts.map((alert) => (
+                    <button
+                      key={alert.id}
+                      onClick={() => markRead(alert.id)}
+                      className={`flex w-full items-start gap-3 border-b border-[var(--border)] px-4 py-3 text-left transition-colors last:border-0 hover:bg-[var(--bg-subtle)] ${
+                        alert.isRead ? 'opacity-60' : ''
                       }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      {alert.severity === 'Critical' && <AlertTriangle size={16} className="text-[var(--red)] mt-0.5 shrink-0" />}
-                      <div>
-                        <p className="text-sm font-medium text-[var(--white)]">{alert.title}</p>
-                        <p className="text-xs text-[var(--slate-400)] mt-0.5">{alert.message}</p>
-                        <p className="text-[10px] text-[var(--slate-600)] mt-1">
+                    >
+                      {alert.severity === 'Critical' ? (
+                        <AlertTriangle size={16} className="mt-0.5 shrink-0 text-[var(--danger)]" />
+                      ) : (
+                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--brand)]" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-[var(--text-strong)]">{alert.title}</p>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-[var(--text-muted)]">{alert.message}</p>
+                        <p className="mt-1 text-[10px] text-[var(--text-faint)]">
                           {new Date(alert.createdAt).toLocaleString()}
                         </p>
                       </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </>
           )}
         </div>
 
         {/* User */}
-        <div className="flex items-center gap-3 pl-4 border-l border-[var(--slate-600)]/40">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--gold-500)] to-[var(--gold-600)] flex items-center justify-center">
-            <User size={16} className="text-[var(--navy-900)]" />
+        <div className="flex items-center gap-2.5 border-l border-[var(--border)] pl-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand)] text-xs font-bold text-[#2a2107]">
+            {initials}
           </div>
           <div className="hidden md:block">
-            <p className="text-sm font-medium text-[var(--white)]">{user?.fullName}</p>
-            <p className="text-[10px] text-[var(--gold-400)] uppercase tracking-wider">{user?.role}</p>
+            <p className="text-sm font-medium leading-tight text-[var(--text-strong)]">{user?.fullName}</p>
+            <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{user?.role}</p>
           </div>
         </div>
       </div>

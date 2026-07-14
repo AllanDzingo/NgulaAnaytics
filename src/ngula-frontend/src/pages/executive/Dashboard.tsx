@@ -5,11 +5,11 @@ import { KpiCard } from '@/components/KpiCard';
 import { ChartCard } from '@/components/ChartCard';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell, Legend, CartesianGrid,
 } from 'recharts';
 import {
   TrendingUp, ShieldAlert, CheckSquare, AlertTriangle,
-  Wrench, Bell, Activity, RefreshCw,
+  Wrench, Bell, RefreshCw, ChevronRight, ArrowRightLeft, FilePlus2,
 } from 'lucide-react';
 
 interface ExecutiveSummary {
@@ -33,10 +33,20 @@ const DUMMY_TREND = [
   { day: 'Sun', crushed: 1900, milled: 1700 },
 ];
 
-const COLORS = ['#d4a843', '#2ecc71', '#e74c3c', '#5a6e8f'];
+const COLORS = ['#d4a843', '#16a34a', '#dc2626', '#9aa2ae'];
+
+const AXIS_TICK = { fill: '#9aa2ae', fontSize: 11 };
+const TOOLTIP_STYLE = {
+  background: '#ffffff',
+  border: '1px solid #e6e8ec',
+  borderRadius: 12,
+  boxShadow: '0 8px 28px rgba(16,24,40,0.12)',
+  fontSize: 12,
+  color: '#111318',
+};
 
 const severityColor = (s: string) =>
-  s === 'Critical' ? 'var(--red)' : s === 'Warning' ? 'var(--amber)' : 'var(--slate-400)';
+  s === 'Critical' ? 'var(--danger)' : s === 'Warning' ? 'var(--warning)' : 'var(--text-muted)';
 
 export function ExecutiveDashboard() {
   const [summary, setSummary] = useState<ExecutiveSummary | null>(null);
@@ -76,124 +86,126 @@ export function ExecutiveDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-[var(--white)]">Executive Dashboard</h2>
-          <p className="text-sm text-[var(--slate-400)] mt-0.5">
+          <h2 className="text-2xl font-bold text-[var(--text-strong)]">Executive Dashboard</h2>
+          <p className="mt-0.5 text-sm text-[var(--text-muted)]">
             Mining operations overview · Last updated {lastUpdated.toLocaleTimeString()}
           </p>
         </div>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="btn btn-secondary flex items-center gap-2"
-        >
+        <button onClick={load} disabled={loading} className="btn btn-secondary">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           Refresh
         </button>
       </div>
 
       {loading && !summary ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[...Array(7)].map((_, i) => (
-            <div key={i} className="glass-card p-5 gold-accent h-24 animate-pulse" />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="skeleton h-[104px]" />
           ))}
         </div>
       ) : (
         <>
           {/* KPI Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {kpis.map(k => <KpiCard key={k.label} kpi={k} />)}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {kpis.map((k) => <KpiCard key={k.label} kpi={k} />)}
           </div>
 
           {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <ChartCard title="Production Trend (7 Days)" className="lg:col-span-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <ChartCard
+              title="Production Trend"
+              subtitle="Tons crushed vs. milled — last 7 days"
+              className="lg:col-span-2"
+            >
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={DUMMY_TREND}>
+                <AreaChart data={DUMMY_TREND} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gc" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#d4a843" stopOpacity={0.3} />
+                      <stop offset="5%" stopColor="#d4a843" stopOpacity={0.28} />
                       <stop offset="95%" stopColor="#d4a843" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="gm" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2ecc71" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#2ecc71" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#16a34a" stopOpacity={0.22} />
+                      <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="day" tick={{ fill: '#8899b4', fontSize: 11 }} axisLine={false} />
-                  <YAxis tick={{ fill: '#8899b4', fontSize: 11 }} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{ background: 'var(--navy-800)', border: '1px solid var(--slate-600)', borderRadius: 8 }}
-                    labelStyle={{ color: 'var(--white)' }}
-                  />
-                  <Area type="monotone" dataKey="crushed" stroke="#d4a843" strokeWidth={2} fill="url(#gc)" name="Tons Crushed" />
-                  <Area type="monotone" dataKey="milled" stroke="#2ecc71" strokeWidth={2} fill="url(#gm)" name="Tons Milled" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eceef1" vertical={false} />
+                  <XAxis dataKey="day" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+                  <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ stroke: '#e6e8ec' }} />
+                  <Area type="monotone" dataKey="crushed" stroke="#d4a843" strokeWidth={2.5} fill="url(#gc)" name="Tons Crushed" />
+                  <Area type="monotone" dataKey="milled" stroke="#16a34a" strokeWidth={2.5} fill="url(#gm)" name="Tons Milled" />
                 </AreaChart>
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Equipment Status">
+            <ChartCard title="Equipment Status" subtitle="Availability split">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value">
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={58} outerRadius={82} paddingAngle={3} dataKey="value" stroke="none">
                     {pieData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
                   </Pie>
-                  <Tooltip contentStyle={{ background: 'var(--navy-800)', border: '1px solid var(--slate-600)', borderRadius: 8 }} />
-                  <Legend wrapperStyle={{ fontSize: 12, color: 'var(--slate-400)' }} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Legend wrapperStyle={{ fontSize: 12, color: '#6b7280' }} iconType="circle" />
                 </PieChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
 
           {/* Bottom row — Alerts & Quick links */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* Recent Alerts */}
             <div className="glass-card p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[var(--white)] flex items-center gap-2">
-                  <Bell size={16} className="text-[var(--gold-400)]" /> Recent Alerts
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--text-strong)]">
+                  <Bell size={16} className="text-[var(--brand-strong)]" /> Recent Alerts
                 </h3>
-                <span className="text-xs text-[var(--slate-500)]">{summary?.recentAlerts.length ?? 0} unread</span>
+                <span className="text-xs text-[var(--text-muted)]">{summary?.recentAlerts.length ?? 0} unread</span>
               </div>
               <div className="space-y-2">
-                {summary?.recentAlerts.length ? summary.recentAlerts.map(a => (
-                  <div key={a.id} className="flex items-start gap-3 p-3 rounded-lg bg-[var(--navy-700)]/50 hover:bg-[var(--navy-700)] transition-colors">
+                {summary?.recentAlerts.length ? summary.recentAlerts.map((a) => (
+                  <div key={a.id} className="flex items-start gap-3 rounded-lg border border-[var(--border)] bg-[var(--bg-subtle)] p-3 transition-colors hover:bg-[var(--bg-muted)]">
                     <AlertTriangle size={16} style={{ color: severityColor(a.severity), marginTop: 2 }} className="shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-[var(--white)] truncate">{a.title}</p>
-                      <p className="text-xs text-[var(--slate-400)] truncate">{a.message}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-[var(--text-strong)]">{a.title}</p>
+                      <p className="truncate text-xs text-[var(--text-muted)]">{a.message}</p>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full shrink-0" style={{
-                      background: `${severityColor(a.severity)}20`,
-                      color: severityColor(a.severity)
+                    <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{
+                      background: `${severityColor(a.severity)}18`,
+                      color: severityColor(a.severity),
                     }}>{a.severity}</span>
                   </div>
                 )) : (
-                  <p className="text-sm text-[var(--slate-500)] text-center py-4">No recent alerts</p>
+                  <div className="flex flex-col items-center gap-2 py-8 text-center">
+                    <Bell size={22} className="text-[var(--text-faint)]" />
+                    <p className="text-sm text-[var(--text-muted)]">No recent alerts</p>
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Quick Links */}
             <div className="glass-card p-5">
-              <h3 className="text-sm font-semibold text-[var(--white)] mb-4">Quick Access</h3>
+              <h3 className="mb-4 text-sm font-semibold text-[var(--text-strong)]">Quick Access</h3>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { to: '/production', label: 'Production KPIs', icon: <TrendingUp size={20} />, color: 'var(--gold-500)' },
-                  { to: '/engineering', label: 'Engineering', icon: <Wrench size={20} />, color: 'var(--emerald)' },
-                  { to: '/sheq', label: 'SHEQ Dashboard', icon: <ShieldAlert size={20} />, color: 'var(--amber)' },
-                  { to: '/actions', label: 'Action Tracker', icon: <CheckSquare size={20} />, color: 'var(--gold-400)' },
-                  { to: '/handover', label: 'Shift Handover', icon: <Activity size={20} />, color: 'var(--slate-300)' },
-                  { to: '/shifts/new', label: 'New Report', icon: <Activity size={20} />, color: 'var(--slate-300)' },
-                ].map(item => (
+                  { to: '/production', label: 'Production KPIs', icon: <TrendingUp size={18} />, color: 'var(--brand-strong)' },
+                  { to: '/engineering', label: 'Engineering', icon: <Wrench size={18} />, color: 'var(--success)' },
+                  { to: '/sheq', label: 'SHEQ Dashboard', icon: <ShieldAlert size={18} />, color: 'var(--warning)' },
+                  { to: '/actions', label: 'Action Tracker', icon: <CheckSquare size={18} />, color: 'var(--brand-strong)' },
+                  { to: '/handover', label: 'Shift Handover', icon: <ArrowRightLeft size={18} />, color: 'var(--text-muted)' },
+                  { to: '/shifts/new', label: 'New Report', icon: <FilePlus2 size={18} />, color: 'var(--text-muted)' },
+                ].map((item) => (
                   <Link
                     key={item.to}
                     to={item.to}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-[var(--navy-700)]/50 hover:bg-[var(--navy-700)] border border-transparent hover:border-[var(--slate-600)]/40 transition-all group"
+                    className="group flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--bg-subtle)] p-3 transition-all hover:border-[var(--border-strong)] hover:bg-[var(--bg-muted)]"
                   >
                     <span style={{ color: item.color }}>{item.icon}</span>
-                    <span className="text-sm text-[var(--slate-300)] group-hover:text-[var(--white)] transition-colors">{item.label}</span>
+                    <span className="flex-1 text-sm font-medium text-[var(--text)] transition-colors group-hover:text-[var(--text-strong)]">{item.label}</span>
+                    <ChevronRight size={15} className="text-[var(--text-faint)] transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 ))}
               </div>

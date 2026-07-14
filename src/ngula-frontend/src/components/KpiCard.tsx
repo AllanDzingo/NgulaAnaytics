@@ -1,25 +1,61 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { DashboardKpi } from '@/types';
 
-interface Props { kpi: DashboardKpi; }
+interface Props {
+  kpi: DashboardKpi;
+}
+
+const STATUS_META: Record<string, { bar: string; value: string }> = {
+  good: { bar: 'var(--success)', value: 'var(--text-strong)' },
+  warning: { bar: 'var(--warning)', value: 'var(--text-strong)' },
+  critical: { bar: 'var(--danger)', value: 'var(--text-strong)' },
+  neutral: { bar: 'var(--brand)', value: 'var(--text-strong)' },
+};
 
 export function KpiCard({ kpi }: Props) {
-  const statusColor = kpi.status === 'good' ? 'var(--emerald)' : kpi.status === 'warning' ? 'var(--amber)' : kpi.status === 'critical' ? 'var(--red)' : 'var(--gold-500)';
-  
+  const meta = STATUS_META[kpi.status ?? 'neutral'] ?? STATUS_META.neutral;
+
+  const trendColor =
+    kpi.trendDirection === 'up'
+      ? 'var(--success)'
+      : kpi.trendDirection === 'down'
+        ? 'var(--danger)'
+        : 'var(--text-muted)';
+
   return (
-    <div className="glass-card p-5 gold-accent">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-medium text-[var(--slate-400)] uppercase tracking-wider">{kpi.label}</span>
+    <div className="glass-card card-interactive relative overflow-hidden p-5">
+      {/* Accent bar */}
+      <span
+        className="absolute inset-y-0 left-0 w-1 rounded-r"
+        style={{ background: meta.bar }}
+        aria-hidden="true"
+      />
+      <div className="mb-3 flex items-center justify-between pl-1">
+        <span className="text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
+          {kpi.label}
+        </span>
         {kpi.trend !== undefined && (
-          <span className={`flex items-center gap-1 text-xs font-medium ${kpi.trendDirection === 'up' ? 'text-[var(--emerald)]' : kpi.trendDirection === 'down' ? 'text-[var(--red)]' : 'text-[var(--slate-400)]'}`}>
-            {kpi.trendDirection === 'up' ? <TrendingUp size={14} /> : kpi.trendDirection === 'down' ? <TrendingDown size={14} /> : <Minus size={14} />}
-            {kpi.trend > 0 ? '+' : ''}{kpi.trend}%
+          <span
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
+            style={{ color: trendColor, background: `${trendColor}14` }}
+          >
+            {kpi.trendDirection === 'up' ? (
+              <TrendingUp size={13} />
+            ) : kpi.trendDirection === 'down' ? (
+              <TrendingDown size={13} />
+            ) : (
+              <Minus size={13} />
+            )}
+            {kpi.trend > 0 ? '+' : ''}
+            {kpi.trend}%
           </span>
         )}
       </div>
-      <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-bold kpi-value" style={{ color: statusColor }}>{kpi.value}</span>
-        {kpi.unit && <span className="text-sm text-[var(--slate-400)]">{kpi.unit}</span>}
+      <div className="flex items-baseline gap-1.5 pl-1">
+        <span className="kpi-value text-2xl font-bold" style={{ color: meta.value }}>
+          {kpi.value}
+        </span>
+        {kpi.unit && <span className="text-sm text-[var(--text-muted)]">{kpi.unit}</span>}
       </div>
     </div>
   );

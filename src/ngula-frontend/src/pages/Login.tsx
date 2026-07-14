@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { NgulaLogo } from '@/components/NgulaLogo';
-import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, AlertCircle, ShieldCheck } from 'lucide-react';
 
 export function Login() {
   const { login } = useAuth();
@@ -13,10 +13,7 @@ export function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // NOTE: These must match the credentials created by the backend DataSeeder
-  // (src/NgulAnalytics.Api/Seed/DataSeeder.cs -> CreateUser). The password is
-  // "Demo@2025". Previously this page used "Ngula2025!", which did not match
-  // the seeded hash, so every demo button produced "invalid credentials".
+  // NOTE: These must match the credentials created by the backend DataSeeder.
   const DEMO_PASSWORD = 'Demo@2025';
   const demoUsers = [
     { label: 'Executive', email: 'exec@ngula.demo' },
@@ -25,7 +22,6 @@ export function Login() {
     { label: 'SHEQ', email: 'sheq@ngula.demo' },
     { label: 'Supervisor', email: 'supervisor@ngula.demo' },
   ];
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,72 +38,92 @@ export function Login() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{
-        background: 'radial-gradient(ellipse at 30% 50%, rgba(212,168,67,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 20%, rgba(189,159,114,0.5) 0%, transparent 50%), var(--navy-900)',
-      }}
-    >
-      {/* Animated background grid */}
-      <div
-        className="absolute inset-0 opacity-5"
-        style={{
-          backgroundImage: 'linear-gradient(var(--gold-500) 1px, transparent 1px), linear-gradient(90deg, var(--gold-500) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
+    <div className="grid min-h-screen lg:grid-cols-2">
+      {/* Left — brand panel (hidden on small screens) */}
+      <div className="relative hidden overflow-hidden bg-[var(--ink-900,#111318)] lg:flex lg:flex-col lg:justify-between lg:p-12" style={{ background: '#111318' }}>
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              'linear-gradient(#d4a843 1px, transparent 1px), linear-gradient(90deg, #d4a843 1px, transparent 1px)',
+            backgroundSize: '44px 44px',
+          }}
+        />
+        <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full opacity-20 blur-3xl" style={{ background: '#d4a843' }} />
 
-      <div className="relative w-full max-w-md animate-fade-in">
-        {/* Card */}
-        <div className="glass-card p-8" style={{ borderTop: '3px solid var(--gold-500)' }}>
-          {/* Logo */}
-          <div className="flex flex-col items-center mb-8">
-            <NgulaLogo className="w-14 h-14 mb-4" />
-            <h1 className="text-2xl font-bold text-[var(--white)]">Ngula Analytics</h1>
-            <p className="text-sm text-[var(--slate-400)] mt-1">Mining Intelligence Platform</p>
+        <div className="relative flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
+            <NgulaLogo className="h-7 w-7" />
+          </div>
+          <span className="text-lg font-semibold text-white">Ngula Analytics</span>
+        </div>
+
+        <div className="relative max-w-md">
+          <h2 className="text-3xl font-bold leading-tight text-white">
+            Operational intelligence for mining excellence.
+          </h2>
+          <p className="mt-4 text-sm leading-relaxed text-white/60">
+            Real-time production, equipment and safety insights — unified into one
+            clean, enterprise-grade platform.
+          </p>
+          <div className="mt-8 flex items-center gap-2 text-xs text-white/50">
+            <ShieldCheck size={15} className="text-[#d4a843]" />
+            Secure, role-based access for every department
+          </div>
+        </div>
+
+        <p className="relative text-xs text-white/40">© 2025 Ngula Mining Analytics · All rights reserved</p>
+      </div>
+
+      {/* Right — form */}
+      <div className="flex items-center justify-center bg-[var(--bg-app)] p-6 sm:p-10">
+        <div className="w-full max-w-sm animate-fade-in">
+          {/* Mobile logo */}
+          <div className="mb-8 flex flex-col items-center lg:hidden">
+            <NgulaLogo className="mb-3 h-12 w-12" />
+            <h1 className="text-xl font-bold text-[var(--text-strong)]">Ngula Analytics</h1>
           </div>
 
-          {/* Form */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-[var(--text-strong)]">Welcome back</h1>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">Sign in to your workspace to continue.</p>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="login-email" className="block text-xs font-semibold text-[var(--slate-400)] uppercase tracking-wider mb-1.5">
-                Email Address
-              </label>
-
+              <label htmlFor="login-email" className="mb-1.5 block">Email address</label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--slate-500)]" />
+                <Mail size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
                 <input
                   id="login-email"
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@ngula.demo"
                   required
-                  className="pl-10"
+                  style={{ paddingLeft: 38 }}
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="login-password" className="block text-xs font-semibold text-[var(--slate-400)] uppercase tracking-wider mb-1.5">
-                Password
-              </label>
-
+              <label htmlFor="login-password" className="mb-1.5 block">Password</label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--slate-500)]" />
+                <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="pl-10 pr-10"
+                  style={{ paddingLeft: 38, paddingRight: 38 }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--slate-500)] hover:text-[var(--white)] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)] transition-colors hover:text-[var(--text-strong)]"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -115,22 +131,17 @@ export function Login() {
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-[var(--red)]/10 border border-[var(--red)]/30">
-                <AlertCircle size={16} className="text-[var(--red)] shrink-0" />
-                <p className="text-sm text-[var(--red)]">{error}</p>
+              <div className="flex items-center gap-2 rounded-lg border border-[#fca5a5] bg-[#fee2e2] p-3">
+                <AlertCircle size={16} className="shrink-0 text-[var(--danger)]" />
+                <p className="text-sm text-[#991b1b]">{error}</p>
               </div>
             )}
 
-            <button
-              id="login-submit"
-              type="submit"
-              disabled={loading}
-              className="btn btn-primary w-full mt-2"
-            >
+            <button id="login-submit" type="submit" disabled={loading} className="btn btn-primary mt-1 w-full">
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-[var(--navy-900)]/30 border-t-[var(--navy-900)] rounded-full animate-spin" />
-                  Signing In...
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black/70" />
+                  Signing in…
                 </span>
               ) : (
                 'Sign In'
@@ -139,31 +150,26 @@ export function Login() {
           </form>
 
           {/* Demo users */}
-          <div className="mt-6 pt-6 border-t border-[var(--slate-600)]/40">
-            <p className="text-xs font-semibold text-[var(--slate-500)] uppercase tracking-wider mb-3 text-center">
-              Demo Accounts (password: <span className="font-mono text-[var(--gold-400)]">{DEMO_PASSWORD}</span>)
-
+          <div className="mt-8 border-t border-[var(--border)] pt-6">
+            <p className="mb-3 text-center text-xs text-[var(--text-muted)]">
+              Demo accounts · password{' '}
+              <span className="font-mono font-semibold text-[var(--brand-strong)]">{DEMO_PASSWORD}</span>
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {demoUsers.map(u => (
+              {demoUsers.map((u) => (
                 <button
                   key={u.email}
                   type="button"
                   onClick={() => { setEmail(u.email); setPassword(DEMO_PASSWORD); }}
-
-                  className="text-left px-3 py-2 rounded-lg text-xs bg-[var(--navy-700)] hover:bg-[var(--navy-600)] border border-[var(--slate-600)]/40 hover:border-[var(--gold-500)]/40 transition-all"
+                  className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs transition-all hover:border-[var(--brand)]/50 hover:bg-[var(--brand-tint)]"
                 >
-                  <span className="font-semibold text-[var(--gold-400)]">{u.label}</span>
-                  <span className="block text-[var(--slate-400)] truncate">{u.email}</span>
+                  <span className="font-semibold text-[var(--text-strong)]">{u.label}</span>
+                  <span className="block truncate text-[var(--text-muted)]">{u.email}</span>
                 </button>
               ))}
             </div>
           </div>
         </div>
-
-        <p className="text-center text-xs text-[var(--slate-600)] mt-4">
-          © 2025 Ngula Mining Analytics · All rights reserved
-        </p>
       </div>
     </div>
   );

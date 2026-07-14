@@ -51,15 +51,15 @@ export function DashboardHeader() {
       : location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   return (
-    <div className="bg-[var(--navy-800)]/60 border-b border-[var(--slate-600)]/40 px-6 pt-4">
+    <div className="border-b border-[var(--border)] bg-[var(--bg-surface)] px-4 pt-4 sm:px-6 lg:px-8">
       {/* Title row with logo icon */}
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-9 h-9 rounded-lg bg-[var(--navy-900)] border border-[var(--gold-500)]/40 flex items-center justify-center shrink-0">
-          <NgulaLogo className="w-6 h-6" />
+      <div className="mb-3 flex items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--bg-subtle)] ring-1 ring-[var(--border)]">
+          <NgulaLogo className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-lg font-bold text-[var(--white)] leading-tight">Dashboard</h1>
-          <p className="text-[11px] text-[var(--slate-400)] leading-tight">
+          <h1 className="text-lg font-semibold leading-tight text-[var(--text-strong)]">Dashboard</h1>
+          <p className="text-[12px] leading-tight text-[var(--text-muted)]">
             {role === 'Executive'
               ? 'Cross-department operations intelligence'
               : `${role} workspace`}
@@ -68,17 +68,17 @@ export function DashboardHeader() {
       </div>
 
       {/* Tabs */}
-      <nav className="flex items-center gap-1 overflow-x-auto">
+      <nav className="-mb-px flex items-center gap-1 overflow-x-auto">
         {visibleTabs.map((tab) => {
           const active = isTabActive(tab.path);
           return (
             <NavLink
               key={tab.path}
               to={tab.path}
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+              className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${
                 active
-                  ? 'border-[var(--gold-500)] text-[var(--gold-400)]'
-                  : 'border-transparent text-[var(--slate-400)] hover:text-[var(--white)]'
+                  ? 'border-[var(--brand)] text-[var(--text-strong)]'
+                  : 'border-transparent text-[var(--text-muted)] hover:border-[var(--border-strong)] hover:text-[var(--text-strong)]'
               }`}
             >
               {tab.icon}

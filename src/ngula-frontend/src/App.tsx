@@ -21,7 +21,15 @@ import { ActionDetail } from '@/pages/actions/ActionDetail';
 function ProtectedRoute({ children, requiredRole = 'All' }: { children: React.ReactNode; requiredRole?: string }) {
   const { isAuthenticated, isLoading, hasRole } = useAuth();
 
-  if (isLoading) return <div className="flex items-center justify-center h-screen text-slate-400">Loading...</div>;
+  if (isLoading)
+    return (
+      <div className="flex h-screen items-center justify-center bg-[var(--bg-app)] text-[var(--text-muted)]">
+        <span className="inline-flex items-center gap-2 text-sm">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--border-strong)] border-t-[var(--brand)]" />
+          Loading…
+        </span>
+      </div>
+    );
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!hasRole(requiredRole)) return <Navigate to="/" replace />;
 
