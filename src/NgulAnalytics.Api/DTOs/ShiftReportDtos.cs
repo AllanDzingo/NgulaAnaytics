@@ -11,6 +11,11 @@ public class CreateShiftReportDto
     public CreateSheqObservationDto? SheqObservation { get; set; }
     public CreateUndergroundReadingDto? UndergroundReading { get; set; }
     public CreateShiftHandoverDto? Handover { get; set; }
+    
+    // Efficiency/Resource metrics
+    public decimal FuelUsageLiters { get; set; }
+    public decimal EnergyKwh { get; set; }
+    public decimal WaterKl { get; set; }
 }
 
 public class CreateProductionEntryDto
@@ -92,6 +97,11 @@ public class ShiftReportDetailDto
     public SheqObservationDto? SheqObservation { get; set; }
     public UndergroundReadingDto? UndergroundReading { get; set; }
     public ShiftHandoverDto? Handover { get; set; }
+    
+    // Efficiency/Resource metrics
+    public decimal FuelUsageLiters { get; set; }
+    public decimal EnergyKwh { get; set; }
+    public decimal WaterKl { get; set; }
 }
 
 public class ProductionEntryDto

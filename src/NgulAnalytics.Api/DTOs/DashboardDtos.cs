@@ -10,6 +10,12 @@ public class ExecutiveSummaryDto
     public int OverdueActions { get; set; }
     public decimal EquipmentAvailability { get; set; }
     public List<AlertDto> RecentAlerts { get; set; } = new();
+    
+    // Efficiency/Tracking
+    public int CriticalActionItems { get; set; }
+    public decimal FuelPerYield { get; set; }
+    public decimal WaterPerYield { get; set; }
+    public decimal EnergyPerYield { get; set; }
 }
 
 public class AlertDto
@@ -81,10 +87,26 @@ public class SheqKpiDto
     public decimal ExcavationRate { get; set; }
     public decimal TotalTruckloads { get; set; }
     public int TotalIncidents { get; set; }
+    
+    // Efficiency
+    public decimal FuelPerYield { get; set; }
+    public decimal WaterPerYield { get; set; }
+    public decimal EnergyPerYield { get; set; }
 }
 
 public class MaintenanceKpiDto
 {
+    // Legacy fields kept for backward compatibility
     public int OverdueCount { get; set; }
     public int UpcomingCount { get; set; }
+
+    // Expanded KPI fields (match frontend MaintenanceKpi)
+    public int TotalEquipment { get; set; }
+    public int OverdueServices { get; set; }
+    public int UpcomingServices { get; set; }
+    public int OnSchedule { get; set; }
+    public decimal ServiceComplianceRate { get; set; }
+    public decimal AverageHoursUntilService { get; set; }
 }
+
+

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NgulAnalytics.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b99a6446785fca60751eaa3df246ea1d7206e60e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a467239161770231afe9c2f94febc43cfc18a3ad")]
 [assembly: System.Reflection.AssemblyProductAttribute("NgulAnalytics.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NgulAnalytics.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

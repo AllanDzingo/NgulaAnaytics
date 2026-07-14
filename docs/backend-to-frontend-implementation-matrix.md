@@ -199,11 +199,11 @@
 | Issue | Detail |
 |-------|--------|
 | ~~`actionsApi.getAll()` sent `assignedToId`~~ | ✅ **ALREADY CORRECT** — client.ts uses `assignedTo` |
-| `actionsApi.getAll()` doesn't pass `page`/`pageSize` | Backend pagination not leveraged |
-| `MaintenanceKpiDto` (backend) vs `MaintenanceKpi` (frontend types) | 2 fields vs 6 fields — complete mismatch |
-| `maintenance/Dashboard.tsx` uses `equipmentApi.getAll()` | Should use `maintenanceApi.getKpis()` |
-| `alertsApi` defined but never consumed in any page | No alert UI exists |
-| `equipmentApi.getHealthScores()` defined but never consumed | No UI for health scores |
+| ~~`actionsApi.getAll()` doesn't pass `page`/`pageSize`~~ | ✅ **FIXED** — client.ts now supports `source`, `page`, `pageSize` |
+| ~~`MaintenanceKpiDto` (backend) vs `MaintenanceKpi` (frontend types)~~ | ✅ **FIXED** — DTO + service now expose all 6 fields |
+| ~~`maintenance/Dashboard.tsx` uses `equipmentApi.getAll()`~~ | ✅ **FIXED** — now also consumes `maintenanceApi.getKpis()` for KPI cards |
+| ~~`alertsApi` missing `count` / `mark-all-read` methods~~ | ✅ **FIXED** — client.ts now has `getAll(unreadOnly)`, `getCount()`, `markAllRead()` |
+| `equipmentApi.getHealthScores()` defined but never consumed | No UI for health scores (UI enhancement, non-blocking) |
 
 ### 🟢 Implemented Correctly
 

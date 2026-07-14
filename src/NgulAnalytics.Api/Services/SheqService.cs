@@ -66,6 +66,15 @@ public class SheqService
     {
         var underKpis = await GetUndergroundKpisAsync(startDate, endDate);
         var incidents = await GetTotalIncidentsAsync(startDate, endDate);
+        
+        var shiftReports = await _context.ShiftReports.ToListAsync();
+        var totalFuel = shiftReports.Sum(s => s.FuelUsageLiters);
+        var totalEnergy = shiftReports.Sum(s => s.EnergyKwh);
+        var totalWater = shiftReports.Sum(s => s.WaterKl);
+        
+        var prodEntries = await _context.ProductionEntries.ToListAsync();
+        var yieldTons = prodEntries.Sum(p => p.TonsMilled);
+        if (yieldTons == 0) yieldTons = 1;
 
         return new SheqKpiDto
         {
@@ -73,7 +82,10 @@ public class SheqService
             DustCompliance = underKpis.TryGetValue("DustCompliance", out var dust) ? dust : 100,
             ExcavationRate = underKpis.TryGetValue("ExcavationRate", out var exc) ? exc : 0,
             TotalTruckloads = underKpis.TryGetValue("TotalTruckloads", out var tl) ? tl : 0,
-            TotalIncidents = incidents
+            TotalIncidents = incidents,
+            FuelPerYield = Math.Round(totalFuel / yieldTons, 2),
+            EnergyPerYield = Math.Round(totalEnergy / yieldTons, 2),
+            WaterPerYield = Math.Round(totalWater / yieldTons, 2)
         };
     }
 }

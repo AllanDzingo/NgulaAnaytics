@@ -72,7 +72,10 @@ public class ShiftReportController : ControllerBase
             SupervisorId = supervisorId,
             SectionId = request.SectionId,
             Status = "Submitted",
-            SubmittedAt = DateTime.UtcNow
+            SubmittedAt = DateTime.UtcNow,
+            FuelUsageLiters = request.FuelUsageLiters,
+            EnergyKwh = request.EnergyKwh,
+            WaterKl = request.WaterKl
         };
 
         _context.ShiftReports.Add(report);

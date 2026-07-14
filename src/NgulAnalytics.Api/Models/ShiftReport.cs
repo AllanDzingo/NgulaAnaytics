@@ -20,4 +20,9 @@ public class ShiftReport
     public ICollection<UndergroundReading> UndergroundReadings { get; set; } = new List<UndergroundReading>();
     public ShiftHandover? ShiftHandover { get; set; }
     public ICollection<Action> Actions { get; set; } = new List<Action>();
+    
+    // Efficiency/Resource metrics
+    public decimal FuelUsageLiters { get; set; }
+    public decimal EnergyKwh { get; set; }
+    public decimal WaterKl { get; set; }
 }

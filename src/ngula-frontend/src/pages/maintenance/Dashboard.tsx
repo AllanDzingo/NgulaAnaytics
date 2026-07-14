@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { equipmentApi } from '@/api/client';
+import { equipmentApi, maintenanceApi } from '@/api/client';
+import type { MaintenanceKpi } from '@/types';
+
 import { KpiCard } from '@/components/KpiCard';
 import { ChartCard } from '@/components/ChartCard';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -21,13 +23,18 @@ const hoursUntilService = (e: Equipment) => {
 
 export function MaintenanceDashboard() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [kpiData, setKpiData] = useState<MaintenanceKpi | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
     try {
-      const res = await equipmentApi.getAll();
-      setEquipment(res.data);
+      const [eqRes, kpiRes] = await Promise.all([
+        equipmentApi.getAll(),
+        maintenanceApi.getKpis(),
+      ]);
+      setEquipment(eqRes.data);
+      setKpiData(kpiRes.data);
     } catch { /* empty */ } finally { setLoading(false); }
   };
 
@@ -42,12 +49,20 @@ export function MaintenanceDashboard() {
     .sort((a, b) => a.hours - b.hours)
     .slice(0, 8);
 
+  // Prefer authoritative KPI values from the backend; fall back to
+  // locally-computed values when the KPI endpoint has not (yet) responded.
+  const totalEquipment = kpiData?.totalEquipment ?? equipment.length;
+  const overdueCount = kpiData?.overdueServices ?? overdue.length;
+  const upcomingCount = kpiData?.upcomingServices ?? upcoming.length;
+  const onScheduleCount = kpiData?.onSchedule ?? ok.length;
+
   const kpis = [
-    { label: 'Total Equipment', value: equipment.length, trendDirection: 'neutral' as const, status: 'good' as const },
-    { label: 'Overdue Services', value: overdue.length, trendDirection: 'neutral' as const, status: overdue.length === 0 ? 'good' : 'critical' as const },
-    { label: 'Due Soon (≤50hrs)', value: upcoming.length, trendDirection: 'neutral' as const, status: upcoming.length <= 2 ? 'good' : 'warning' as const },
-    { label: 'On Schedule', value: ok.length, trendDirection: 'neutral' as const, status: 'good' as const },
+    { label: 'Total Equipment', value: totalEquipment, trendDirection: 'neutral' as const, status: 'good' as const },
+    { label: 'Overdue Services', value: overdueCount, trendDirection: 'neutral' as const, status: overdueCount === 0 ? 'good' : 'critical' as const },
+    { label: 'Due Soon (≤50hrs)', value: upcomingCount, trendDirection: 'neutral' as const, status: upcomingCount <= 2 ? 'good' : 'warning' as const },
+    { label: 'On Schedule', value: onScheduleCount, trendDirection: 'neutral' as const, status: 'good' as const },
   ];
+
 
   return (
     <div className="space-y-6">

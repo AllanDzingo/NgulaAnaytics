@@ -69,8 +69,15 @@ export const shiftReportApi = {
 
 // Actions API
 export const actionsApi = {
-  getAll: (params?: { status?: string; priority?: string; assignedTo?: string }) =>
-    apiClient.get('/actions', { params }),
+  getAll: (params?: {
+    status?: string;
+    priority?: string;
+    assignedTo?: string;
+    source?: string;
+    page?: number;
+    pageSize?: number;
+  }) => apiClient.get('/actions', { params }),
+
   getById: (id: number) => apiClient.get(`/actions/${id}`),
   create: (data: unknown) => apiClient.post('/actions', data),
   update: (id: number, data: unknown) => apiClient.patch(`/actions/${id}`, data),
@@ -99,9 +106,12 @@ export const maintenanceApi = {
 
 // Alerts API
 export const alertsApi = {
-  getAll: () => apiClient.get('/alerts'),
+  getAll: (params?: { unreadOnly?: boolean }) => apiClient.get('/alerts', { params }),
+  getCount: () => apiClient.get('/alerts/count'),
   markRead: (id: number) => apiClient.patch(`/alerts/${id}/mark-read`),
+  markAllRead: () => apiClient.patch('/alerts/mark-all-read'),
 };
+
 
 // Production Targets API
 export const targetsApi = {

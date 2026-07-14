@@ -38,6 +38,13 @@ public class DashboardService
                 CreatedAt = a.CreatedAt
             })
             .ToListAsync();
+            
+        var totalFuel = await _context.ShiftReports.SumAsync(s => s.FuelUsageLiters);
+        var totalEnergy = await _context.ShiftReports.SumAsync(s => s.EnergyKwh);
+        var totalWater = await _context.ShiftReports.SumAsync(s => s.WaterKl);
+        var yieldTons = productionKpis.TonsMilled > 0 ? productionKpis.TonsMilled : 1; // avoid div by 0
+        
+        var criticalActions = await _context.Actions.CountAsync(a => a.Priority == "Critical" && a.Status != "Closed");
 
         return new ExecutiveSummaryDto
         {
@@ -48,7 +55,11 @@ public class DashboardService
             OpenActions = openActions,
             OverdueActions = overdueActions,
             EquipmentAvailability = engineeringKpis.Availability,
-            RecentAlerts = recentAlerts
+            RecentAlerts = recentAlerts,
+            CriticalActionItems = criticalActions,
+            FuelPerYield = Math.Round(totalFuel / yieldTons, 2),
+            EnergyPerYield = Math.Round(totalEnergy / yieldTons, 2),
+            WaterPerYield = Math.Round(totalWater / yieldTons, 2)
         };
     }
 }
